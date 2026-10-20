@@ -8,6 +8,10 @@
 
 namespace FG\Component\Fgloginasuser\Administrator\View\Logs;
 
+use FG\Component\Fgloginasuser\Administrator\Service\LogStore;
+use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Factory;
+use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\GenericDataException;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
@@ -26,6 +30,9 @@ class HtmlView extends BaseHtmlView
     public function display($tpl = null)
     {
         $model = $this->getModel();
+
+        // Retention also runs when the log is looked at, not only when somebody starts a new login.
+        (new LogStore(Factory::getContainer()->get(DatabaseInterface::class)))->purgeOlderThan((int) ComponentHelper::getParams('com_fgloginasuser')->get('log_retention_days', 365));
 
         $this->items         = $model->getItems();
         $this->pagination    = $model->getPagination();
@@ -56,8 +63,9 @@ class HtmlView extends BaseHtmlView
                 ->message('JGLOBAL_CONFIRM_DELETE')
                 ->listCheck(true);
 
-            $toolbar->standardButton('purge', 'COM_FGLOGINASUSER_LOGS_PURGE', 'logs.purge')
+            $toolbar->confirmButton('purge', 'COM_FGLOGINASUSER_LOGS_PURGE', 'logs.purge')
                 ->icon('icon-trash')
+                ->message('COM_FGLOGINASUSER_LOGS_PURGE_CONFIRM')
                 ->listCheck(false);
         }
 

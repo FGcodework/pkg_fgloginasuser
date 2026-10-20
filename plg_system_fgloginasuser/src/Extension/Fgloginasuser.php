@@ -10,6 +10,8 @@ namespace FG\Plugin\System\Fgloginasuser\Extension;
 
 use FG\Component\Fgloginasuser\Administrator\Service\AccessPolicy;
 use FG\Component\Fgloginasuser\Administrator\Service\ButtonRenderer;
+use FG\Component\Fgloginasuser\Administrator\Service\EndRecorder;
+use FG\Component\Fgloginasuser\Administrator\Service\SessionSwitcher;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -17,6 +19,8 @@ use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\User\UserFactoryInterface;
+use Joomla\CMS\Event\User\LogoutEvent;
+use Joomla\Event\Priority;
 use Joomla\Event\SubscriberInterface;
 
 \defined('_JEXEC') or die;
@@ -35,7 +39,29 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
         return [
             'onBeforeCompileHead' => 'onBeforeCompileHead',
             'onAfterRender'       => 'onAfterRender',
+            // Before core's user plugin, which would end all sessions of the impersonated user.
+            'onUserLogout'        => ['onUserLogout', Priority::MAX],
         ];
+    }
+
+    /**
+     * An ordinary logout (module, menu item, administrator menu) inside an impersonated session must only
+     * end that impersonation. Core's handler would also destroy every other session of the impersonated
+     * user - the real person's own logins - and would leave the audit log without an end.
+     */
+    public function onUserLogout(LogoutEvent $event): void
+    {
+        $app    = $this->getApplication();
+        $marker = $app ? SessionSwitcher::getMarker($app) : null;
+
+        if ($marker === null || $marker['client'] !== ($app->isClient('administrator') ? 'administrator' : 'site')) {
+            return;
+        }
+
+        EndRecorder::record($app, $marker);
+        SessionSwitcher::destroyCurrent($app);
+
+        $event->stopPropagation();
     }
 
     public function onBeforeCompileHead(): void

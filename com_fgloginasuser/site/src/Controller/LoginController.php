@@ -9,7 +9,10 @@
 namespace FG\Component\Fgloginasuser\Site\Controller;
 
 use FG\Component\Fgloginasuser\Administrator\Service\AccessPolicy;
+use FG\Component\Fgloginasuser\Administrator\Exception\ImpersonationException;
 use FG\Component\Fgloginasuser\Administrator\Service\ActionLogger;
+use FG\Component\Fgloginasuser\Administrator\Service\EndRecorder;
+use FG\Component\Fgloginasuser\Administrator\Service\Environment;
 use FG\Component\Fgloginasuser\Administrator\Service\LogStore;
 use FG\Component\Fgloginasuser\Administrator\Service\Notifier;
 use FG\Component\Fgloginasuser\Administrator\Service\SessionSwitcher;
@@ -66,9 +69,18 @@ class LoginController extends BaseController
         }
 
         if ((int) $params->get('bind_ip', 1) && !hash_equals((string) $row->ip, $ip)) {
-            $log->markDenied((int) $row->id, 'Token used from a different IP address: ' . $ip);
-            ActionLogger::log($app, ActionLogger::DENIED, (int) $row->actor_id, (string) $row->actor_username, (int) $row->target_id, (string) $row->target_username, 'Token used from a different IP address: ' . $ip);
+            $reason = 'COM_FGLOGINASUSER_ERR_TOKEN_IP|' . $ip;
+            $log->markDenied((int) $row->id, $reason, LogStore::STATUS_PENDING);
+            ActionLogger::log($app, ActionLogger::DENIED, (int) $row->actor_id, (string) $row->actor_username, (int) $row->target_id, (string) $row->target_username, $reason);
             $this->setRedirect($home, Text::_('COM_FGLOGINASUSER_SITE_ERR_IP'), 'error');
+
+            return;
+        }
+
+        if (($envError = Environment::check($app)) !== null) {
+            $log->markDenied((int) $row->id, $envError, LogStore::STATUS_PENDING);
+            ActionLogger::log($app, ActionLogger::DENIED, (int) $row->actor_id, (string) $row->actor_username, (int) $row->target_id, (string) $row->target_username, $envError);
+            $this->setRedirect($home, Text::_('COM_FGLOGINASUSER_SITE_ERR_DENIED'), 'error');
 
             return;
         }
@@ -88,24 +100,38 @@ class LoginController extends BaseController
         $error = (new AccessPolicy($params))->evaluate($actor, $target, AccessPolicy::CLIENT_SITE);
 
         if ($error !== null) {
-            $log->markDenied((int) $row->id, $error);
+            $log->markDenied((int) $row->id, $error, LogStore::STATUS_ACTIVE);
             ActionLogger::log($app, ActionLogger::DENIED, (int) $row->actor_id, (string) $row->actor_username, (int) $row->target_id, (string) $row->target_username, $error);
             $this->setRedirect($home, Text::_('COM_FGLOGINASUSER_SITE_ERR_DENIED'), 'error');
 
             return;
         }
 
+        // A session that is still impersonating someone else (second click, second tab): close that one properly first.
+        if (($previous = SessionSwitcher::getMarker($app)) !== null) {
+            EndRecorder::record($app, $previous, 'COM_FGLOGINASUSER_NOTE_REPLACED');
+        }
+
+        try {
+            SessionSwitcher::switchTo($app, $target, [
+                'log_id'          => (int) $row->id,
+                'actor_id'        => (int) $actor->id,
+                'actor_username'  => $actor->username,
+                'target_id'       => (int) $target->id,
+                'target_username' => $target->username,
+                'client'          => AccessPolicy::CLIENT_SITE,
+            ]);
+        } catch (ImpersonationException $e) {
+            $log->markDenied((int) $row->id, $e->getMessage(), LogStore::STATUS_ACTIVE);
+            ActionLogger::log($app, ActionLogger::DENIED, (int) $row->actor_id, (string) $row->actor_username, (int) $row->target_id, (string) $row->target_username, $e->getMessage());
+            $this->setRedirect($home, Text::_('COM_FGLOGINASUSER_SITE_ERR_DENIED'), 'error');
+
+            return;
+        }
+
+        // Reported only once the identity has really been switched.
         Notifier::send($app, $params, $actor->username, $target->username, AccessPolicy::CLIENT_SITE, $ip);
         ActionLogger::log($app, ActionLogger::STARTED_SITE, (int) $actor->id, $actor->username, (int) $target->id, $target->username);
-
-        SessionSwitcher::switchTo($app, $target, [
-            'log_id'          => (int) $row->id,
-            'actor_id'        => (int) $actor->id,
-            'actor_username'  => $actor->username,
-            'target_id'       => (int) $target->id,
-            'target_username' => $target->username,
-            'client'          => AccessPolicy::CLIENT_SITE,
-        ]);
 
         $this->setRedirect($this->redirectUrl($params));
     }
@@ -125,16 +151,7 @@ class LoginController extends BaseController
             return;
         }
 
-        (new LogStore(Factory::getContainer()->get(DatabaseInterface::class)))->end((int) ($marker['log_id'] ?? 0));
-
-        ActionLogger::log(
-            $this->app,
-            ActionLogger::ENDED,
-            (int) $marker['actor_id'],
-            (string) ($marker['actor_username'] ?? ''),
-            (int) ($marker['target_id'] ?? 0),
-            (string) ($marker['target_username'] ?? '')
-        );
+        EndRecorder::record($this->app, $marker);
 
         SessionSwitcher::destroyCurrent($this->app);
 

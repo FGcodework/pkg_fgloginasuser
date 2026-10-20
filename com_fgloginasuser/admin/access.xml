@@ -5,6 +5,7 @@
 		<action name="core.options" title="JACTION_OPTIONS" description="JACTION_OPTIONS_COMPONENT_DESC" />
 		<action name="core.manage" title="JACTION_MANAGE" description="JACTION_MANAGE_COMPONENT_DESC" />
 		<action name="core.delete" title="JACTION_DELETE" description="COM_FGLOGINASUSER_ACCESS_DELETE_DESC" />
+		<action name="fgloginasuser.logs" title="COM_FGLOGINASUSER_ACTION_LOGS" description="COM_FGLOGINASUSER_ACTION_LOGS_DESC" />
 		<action name="fgloginasuser.frontend" title="COM_FGLOGINASUSER_ACTION_FRONTEND" description="COM_FGLOGINASUSER_ACTION_FRONTEND_DESC" />
 		<action name="fgloginasuser.backend" title="COM_FGLOGINASUSER_ACTION_BACKEND" description="COM_FGLOGINASUSER_ACTION_BACKEND_DESC" />
 	</section>

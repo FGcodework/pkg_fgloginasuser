@@ -9,6 +9,7 @@
 namespace FG\Component\Fgloginasuser\Administrator\Service;
 
 use Joomla\CMS\Application\CMSApplication;
+use FG\Component\Fgloginasuser\Administrator\Exception\ImpersonationException;
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Factory;
 use Joomla\CMS\User\User;
@@ -52,16 +53,21 @@ final class SessionSwitcher
     /**
      * Make $target the user of the current session. A non-null $marker records the
      * impersonation, null clears it (used when returning to the original user).
+     *
+     * @throws  ImpersonationException  When the session id could not be regenerated.
      */
     public static function switchTo(CMSApplication $app, User $target, ?array $marker): void
     {
+        $session = $app->getSession();
+        $oldId   = $session->getId();
+
+        // Regenerate the session id first; if that fails nothing has been changed yet.
+        if ($session->fork() === false) {
+            throw new ImpersonationException('COM_FGLOGINASUSER_ERR_SESSION');
+        }
+
         $target->guest = 0;
         $app->loadIdentity($target);
-
-        $session  = $app->getSession();
-        $oldId    = $session->getId();
-
-        $session->fork();
         $session->set('user', $target);
 
         // The actor is already authenticated, so no second-factor captive page for the target.

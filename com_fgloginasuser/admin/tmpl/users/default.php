@@ -21,6 +21,7 @@ $wa->registerAndUseScript('com_fgloginasuser.users', 'com_fgloginasuser/users.js
 $wa->registerAndUseStyle('com_fgloginasuser.admin', 'com_fgloginasuser/admin.css');
 
 $customCss = ButtonRenderer::customCss($this->params);
+$showEmail = \FG\Component\Fgloginasuser\Administrator\Model\UsersModel::canSeeEmail();
 
 if ($customCss !== '') {
     $wa->addInlineStyle($customCss);
@@ -62,7 +63,9 @@ $me        = (int) $this->getCurrentUser()->id;
                             <?php if ((int) $item->id === $me) : ?>
                                 <span class="badge bg-info"><?php echo Text::_('COM_FGLOGINASUSER_YOU'); ?></span>
                             <?php endif; ?>
-                            <div class="small text-muted"><?php echo $this->escape($item->email); ?></div>
+                            <?php if ($showEmail) : ?>
+                                <div class="small text-muted"><?php echo $this->escape($item->email); ?></div>
+                            <?php endif; ?>
                         </th>
                         <td class="d-none d-md-table-cell"><?php echo $this->escape($item->username); ?></td>
                         <td class="d-none d-lg-table-cell small"><?php echo $this->escape($item->group_titles ?? ''); ?></td>

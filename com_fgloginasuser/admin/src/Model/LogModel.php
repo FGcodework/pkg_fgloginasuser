@@ -8,6 +8,7 @@
 
 namespace FG\Component\Fgloginasuser\Administrator\Model;
 
+use FG\Component\Fgloginasuser\Administrator\Service\LogStore;
 use Joomla\CMS\MVC\Model\AdminModel;
 
 \defined('_JEXEC') or die;
@@ -23,20 +24,17 @@ class LogModel extends AdminModel
     }
 
     /**
-     * Delete every log row.
+     * Delete the finished history. Unexpired tokens and recent active impersonations are kept, so the
+     * clean-up cannot cancel a login that is just about to happen or lose the record of a running one.
      */
     public function purgeAll(): bool
     {
-        $db = $this->getDatabase();
-
         try {
-            $db->setQuery($db->createQuery()->delete($db->quoteName('#__fgloginasuser_logs')))->execute();
+            return (new LogStore($this->getDatabase()))->purgeFinished();
         } catch (\RuntimeException $e) {
             $this->setError($e->getMessage());
 
             return false;
         }
-
-        return true;
     }
 }

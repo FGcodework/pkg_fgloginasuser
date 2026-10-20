@@ -9,7 +9,10 @@
 namespace FG\Component\Fgloginasuser\Administrator\Controller;
 
 use FG\Component\Fgloginasuser\Administrator\Service\AccessPolicy;
+use FG\Component\Fgloginasuser\Administrator\Exception\ImpersonationException;
 use FG\Component\Fgloginasuser\Administrator\Service\ActionLogger;
+use FG\Component\Fgloginasuser\Administrator\Service\EndRecorder;
+use FG\Component\Fgloginasuser\Administrator\Service\Environment;
 use FG\Component\Fgloginasuser\Administrator\Service\LogStore;
 use FG\Component\Fgloginasuser\Administrator\Service\Notifier;
 use FG\Component\Fgloginasuser\Administrator\Service\SessionSwitcher;
@@ -65,7 +68,7 @@ class ImpersonateController extends BaseController
             return;
         }
 
-        $error = (new AccessPolicy($params))->evaluate($actor, $target, $client);
+        $error = (new AccessPolicy($params))->evaluate($actor, $target, $client) ?? Environment::check($this->app);
 
         if ($error !== null) {
             $this->deny($log, $actor, $target, $targetId, $client, $ip, $error);
@@ -101,17 +104,27 @@ class ImpersonateController extends BaseController
         // Backend: switch this very session.
         $logId = $log->create($actor, $target, $client, LogStore::STATUS_ACTIVE, $ip);
 
+        try {
+            SessionSwitcher::switchTo($this->app, $target, [
+                'log_id'          => $logId,
+                'actor_id'        => (int) $actor->id,
+                'actor_username'  => $actor->username,
+                'target_id'       => (int) $target->id,
+                'target_username' => $target->username,
+                'client'          => AccessPolicy::CLIENT_ADMIN,
+            ]);
+        } catch (ImpersonationException $e) {
+            // Nothing was switched: record the failure instead of a login that never happened.
+            $log->markDenied($logId, $e->getMessage(), LogStore::STATUS_ACTIVE);
+            ActionLogger::log($this->app, ActionLogger::DENIED, (int) $actor->id, $actor->username, (int) $target->id, $target->username, $e->getMessage());
+            $this->setMessage(Text::_($e->getMessage()), 'error');
+
+            return;
+        }
+
+        // Reported only once the identity has really been switched.
         Notifier::send($this->app, $params, $actor->username, $target->username, $client, $ip);
         ActionLogger::log($this->app, ActionLogger::STARTED_ADMIN, (int) $actor->id, $actor->username, (int) $target->id, $target->username);
-
-        SessionSwitcher::switchTo($this->app, $target, [
-            'log_id'          => $logId,
-            'actor_id'        => (int) $actor->id,
-            'actor_username'  => $actor->username,
-            'target_id'       => (int) $target->id,
-            'target_username' => $target->username,
-            'client'          => AccessPolicy::CLIENT_ADMIN,
-        ]);
 
         $redirect = trim((string) $params->get('admin_redirect_url', ''));
 
@@ -138,16 +151,9 @@ class ImpersonateController extends BaseController
         }
 
         $container = Factory::getContainer();
-        (new LogStore($container->get(DatabaseInterface::class)))->end((int) ($marker['log_id'] ?? 0));
 
-        ActionLogger::log(
-            $this->app,
-            ActionLogger::ENDED,
-            (int) $marker['actor_id'],
-            (string) ($marker['actor_username'] ?? ''),
-            (int) ($marker['target_id'] ?? 0),
-            (string) ($marker['target_username'] ?? '')
-        );
+        // Audit problems must never keep the user inside the foreign identity.
+        EndRecorder::record($this->app, $marker);
 
         $actor = $container->get(UserFactoryInterface::class)->loadUserById((int) $marker['actor_id']);
 

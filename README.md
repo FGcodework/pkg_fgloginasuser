@@ -63,7 +63,7 @@ Things to know:
 
 ## Tests
 
-`tests/browser_click.py` additionally clicks the real buttons in Chromium (Playwright). `tests/e2e.py` is the browser-like end-to-end suite used for the release (133 checks: both targets, ACL, restrictions, token replay / expiry / IP mismatch / junk, CSRF, MFA, parallel real sessions, mail, retention, `com_users` list buttons, User Actions Log, PHP warnings). It expects a throw-away Joomla at `http://127.0.0.1:8080` with the users `root`, `alice`, `bob`, `carol` (Manager), `mike` (Manager), `dave` (blocked), `sue` (Super User) - see the top of the script.
+`tests/audit.py` (26 checks) holds the regression tests for the findings of the 1.0.5 security review (shared sessions, actor revalidation, group inheritance, forced password reset, logout in an impersonated session, audit-table outage, log permissions, purge); it reuses the helpers of `e2e.py`. `tests/logstore_probe.php <joomla-root> <actorId> <targetId>` checks the token claim / refusal race against the real database. `tests/browser_click.py` additionally clicks the real buttons in Chromium (Playwright). `tests/e2e.py` is the browser-like end-to-end suite used for the release (133 checks: both targets, ACL, restrictions, token replay / expiry / IP mismatch / junk, CSRF, MFA, parallel real sessions, mail, retention, `com_users` list buttons, User Actions Log, PHP warnings). It expects a throw-away Joomla at `http://127.0.0.1:8080` with the users `root`, `alice`, `bob`, `carol` (Manager), `mike` (Manager), `dave` (blocked), `sue` (Super User) - see the top of the script.
 
 ## Repository layout
 
@@ -73,7 +73,7 @@ Things to know:
 | `com_fgloginasuser/` | Component (administrator + site + media) |
 | `plg_system_fgloginasuser/` | System plugin: return bar, buttons and *Login as* column in `com_users` |
 | `plg_actionlog_fgloginasuser/` | Action log plugin: language strings for the User Actions Log |
-| `tests/` | End-to-end suite (`e2e.py`) and real-browser click test (`browser_click.py`) |
+| `tests/` | End-to-end suite (`e2e.py`), review regression tests (`audit.py`, `logstore_probe.php`) and real-browser click test (`browser_click.py`) |
 | `build.sh` | Builds `dist/pkg_fgloginasuser_vX.X.X.zip` and regenerates `updates.xml` |
 | `updates.xml` | Joomla update server feed (generated) |
 
@@ -94,3 +94,9 @@ GNU General Public License version 2 or later - see [LICENSE](LICENSE).
 ## About
 
 Part of the FG extension series by [FGcodework](https://github.com/FGcodework). Inspired by the idea of the Web357 *Login as User* component; this is an independent implementation written for Joomla 6 and works on the backend as well.
+
+## Known limitations
+
+- The one-time login link carries a bearer token in the URL (valid 60 s, single use, bound to the IP by default).
+- No absolute time limit on an impersonation, no mandatory reason / ticket field and no step-up authentication; candidates for a later release.
+- Viewing the audit log needs the separate permission `Log` (`fgloginasuser.logs`).

@@ -69,12 +69,16 @@ class UsersModel extends ListModel
                 $query->where($db->quoteName('a.id') . ' = :uid')
                     ->bind(':uid', $id, ParameterType::INTEGER);
             } else {
-                $like = '%' . str_replace(' ', '%', $search) . '%';
-                $query->where(
-                    '(' . $db->quoteName('a.name') . ' LIKE :s1 OR ' . $db->quoteName('a.username') . ' LIKE :s2'
-                    . ' OR ' . $db->quoteName('a.email') . ' LIKE :s3)'
-                )
-                    ->bind([':s1', ':s2', ':s3'], $like);
+                $like  = '%' . str_replace(' ', '%', $search) . '%';
+                $match = $db->quoteName('a.name') . ' LIKE :s1 OR ' . $db->quoteName('a.username') . ' LIKE :s2';
+
+                // Searching by e-mail would reveal addresses to those who may not see them.
+                if (self::canSeeEmail()) {
+                    $match .= ' OR ' . $db->quoteName('a.email') . ' LIKE :s3';
+                    $query->bind(':s3', $like);
+                }
+
+                $query->where('(' . $match . ')')->bind([':s1', ':s2'], $like);
             }
         }
 
@@ -133,5 +137,15 @@ class UsersModel extends ListModel
         }
 
         return $items;
+    }
+
+    /**
+     * E-mail addresses are shown to those who could see them in the core Users list anyway.
+     */
+    public static function canSeeEmail(): bool
+    {
+        $user = \Joomla\CMS\Factory::getApplication()->getIdentity();
+
+        return $user && $user->authorise('core.manage', 'com_users');
     }
 }

@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.0.8 - 2026-10-20
+
+Security and robustness release, based on an external audit of 1.0.5; every fix has a regression test (`tests/audit.py`) that fails on 1.0.7 and passes here.
+
+- **Ordinary logout inside an impersonated session** (module, menu, administrator menu) now only ends that impersonation. Before, Joomla's own logout handler also destroyed every other session of the impersonated user, i.e. the real person's own logins, and the audit row stayed "active".
+- **Shared sessions** (*Global Configuration -> System -> Shared Session*): logging in as another user is refused, because the impersonated identity would replace the actor's own administrator session and could not be left again.
+- **Actor is re-checked when the one-time token is used**: a blocked, not activated or meanwhile unauthorised administrator can no longer complete a login link that was issued earlier. The actor must also be allowed to log in to the administration.
+- **Group restrictions**: a rule for a parent group now also applies to administrators in its child groups; a target must have *all* its groups within the allowed ones (before, one allowed group was enough even if the user was also in a more privileged group); new option *Administrators without a restriction* (allow / deny) for a strict "deny unless a rule allows" mode.
+- **Users with a pending forced password reset** cannot be impersonated (Joomla would trap the session on the password form and block the way back).
+- **Return bar plugin disabled**: logging in as another user is refused until the *System - FG Login as User* plugin is enabled.
+- **Second login in the same browser session** closes the previous impersonation in the audit log instead of leaving it "active".
+- **Denial cannot overwrite a success**: an attempt that is refused (wrong IP, failed re-check) only changes a row that is still in the expected state.
+- **Audit outage cannot trap a user**: ending an impersonation no longer depends on the audit table; "started" is reported (audit, e-mail, User Actions Log) only after the identity was really switched; a failed session renewal aborts the switch and is logged as denied.
+- **Log access**: new permission *View and delete the audit log* (`fgloginasuser.logs`); e-mail addresses in the component's Users screen (and in its search) are shown only to those who can manage users in `com_users`. Existing non-Super-User administrators lose access to the log until the permission is granted in *Options -> Permissions*.
+- **Log clean-up**: *Delete all* asks for confirmation and removes only finished history (unexpired login links and last-day impersonations are kept); retention also runs when the log is opened.
+- Token-from-another-IP notes are stored as translatable language keys; the package description mentions all three extensions; disabled buttons expose their reason as accessible name.
+
 ## 1.0.7 - 2026-10-20
 
 - The update server (`updates.xml`) and the release workflow now refer to the `master` branch (1.0.6 pointed to `main`). No functional change to the extension code.

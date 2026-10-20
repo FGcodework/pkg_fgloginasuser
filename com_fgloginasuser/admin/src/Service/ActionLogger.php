@@ -50,7 +50,7 @@ final class ActionLogger
         try {
             if (str_starts_with($reason, 'COM_')) {
                 $app->getLanguage()->load('com_fgloginasuser', JPATH_ADMINISTRATOR);
-                $reason = Text::_($reason);
+                $reason = Reason::translate($reason);
             }
 
             $message = [

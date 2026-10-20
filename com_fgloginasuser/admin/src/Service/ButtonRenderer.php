@@ -69,7 +69,7 @@ final class ButtonRenderer
                 $reason = self::e(Text::_($error));
                 $tip    = $compact ? $full . ' - ' . $reason : $reason;
                 $html  .= '<button type="button" class="btn btn-sm btn-outline-secondary" disabled title="' . $tip
-                    . '"><span class="icon-lock" aria-hidden="true"></span> ' . $label . '</button>';
+                    . '" aria-label="' . $full . ' - ' . $reason . '"><span class="icon-lock" aria-hidden="true"></span> ' . $label . '</button>';
             }
         }
 

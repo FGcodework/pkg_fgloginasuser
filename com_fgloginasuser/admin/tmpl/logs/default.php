@@ -9,6 +9,7 @@
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use FG\Component\Fgloginasuser\Administrator\Service\Reason;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
@@ -70,7 +71,7 @@ $badge = [
                         <td>
                             <span class="badge <?php echo $badge[$status] ?? 'bg-secondary'; ?>"><?php echo Text::_('COM_FGLOGINASUSER_STATUS_' . strtoupper($status)); ?></span>
                             <?php if ($note !== '') : ?>
-                                <div class="small text-muted"><?php echo $this->escape(strpos($note, 'COM_') === 0 ? Text::_($note) : $note); ?></div>
+                                <div class="small text-muted"><?php echo $this->escape(Reason::translate($note)); ?></div>
                             <?php endif; ?>
                         </td>
                         <td class="d-none d-lg-table-cell small"><?php echo $this->escape($item->ip); ?></td>

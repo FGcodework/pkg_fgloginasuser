@@ -9,7 +9,9 @@
 namespace FG\Component\Fgloginasuser\Administrator\Dispatcher;
 
 use FG\Component\Fgloginasuser\Administrator\Service\SessionSwitcher;
+use Joomla\CMS\Access\Exception\NotAllowed;
 use Joomla\CMS\Dispatcher\ComponentDispatcher;
+use Joomla\CMS\Language\Text;
 
 \defined('_JEXEC') or die;
 
@@ -33,5 +35,15 @@ class Dispatcher extends ComponentDispatcher
         }
 
         parent::checkAccess();
+
+        // The audit log (IP addresses, who looked at whom) has its own right, separate from using the tool.
+        $input = $this->input;
+
+        if (
+            ($input->getCmd('view') === 'logs' || str_starts_with((string) $input->getCmd('task', ''), 'logs.'))
+            && !$this->app->getIdentity()->authorise('fgloginasuser.logs', 'com_fgloginasuser')
+        ) {
+            throw new NotAllowed(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
     }
 }
