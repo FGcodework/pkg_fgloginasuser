@@ -19,6 +19,7 @@ Package `pkg_fgloginasuser` = component `com_fgloginasuser` + system plugin `plg
 - **Buttons in the core *Users* list** (`com_users`) - the same buttons (compact labels, full text as tooltip), with the same permission and restriction checks, appear in their own *Login as* column after *Username*. Can be switched off in the system plugin options.
 - **Reason for the login** - the dialog asks why you log in as somebody else (do not ask / optional / required, see Options -> Security). Saved in the log, the User Actions Log and the notification e-mail, shown in the return bar.
 - **Predefined reasons** - optionally a drop-down of reasons you define (with a note, and *Other...* which can be switched off); the Logs screen can be filtered by them.
+- **Confirm identity first** (off by default) - before a login as another user the dialog asks for the administrator's own password and, optionally, a code of their second factor (TOTP, YubiKey). The confirmation is remembered for a few minutes; wrong attempts are limited and logged.
 - **Maximum duration** - an impersonation ends automatically after the configured minutes (60 by default, 0 = no limit).
 - **Joomla User Actions Log** - started / ended / denied logins are written to *Users -> User Actions Log* (filterable by extension). Disable the action log plugin to stop writing.
 - Users screen with search / group / status filters; unavailable actions are greyed out with the reason in a tooltip.
@@ -67,7 +68,7 @@ Things to know:
 
 ## Tests
 
-`tests/release111.py` (25 checks) covers predefined reasons and the Logs filter. `tests/release110.py` (30 checks) covers the 1.1.0 features (POST hand-over, reason, maximum duration; it waits about a minute for the time limit). `tests/audit.py` (26 checks) holds the regression tests for the findings of the 1.0.5 security review (shared sessions, actor revalidation, group inheritance, forced password reset, logout in an impersonated session, audit-table outage, log permissions, purge); it reuses the helpers of `e2e.py`. `tests/logstore_probe.php <joomla-root> <actorId> <targetId>` checks the token claim / refusal race against the real database. `tests/browser_click.py` additionally clicks the real buttons in Chromium (Playwright). `tests/e2e.py` is the browser-like end-to-end suite used for the release (133 checks: both targets, ACL, restrictions, token replay / expiry / IP mismatch / junk, CSRF, MFA, parallel real sessions, mail, retention, `com_users` list buttons, User Actions Log, PHP warnings). It expects a throw-away Joomla at `http://127.0.0.1:8080` with the users `root`, `alice`, `bob`, `carol` (Manager), `mike` (Manager), `dave` (blocked), `sue` (Super User) - see the top of the script.
+`tests/release112.py` (31 checks) covers the identity confirmation, including a real TOTP code (it waits about a minute for the validity time). `tests/release111.py` (25 checks) covers predefined reasons and the Logs filter. `tests/release110.py` (30 checks) covers the 1.1.0 features (POST hand-over, reason, maximum duration; it waits about a minute for the time limit). `tests/audit.py` (26 checks) holds the regression tests for the findings of the 1.0.5 security review (shared sessions, actor revalidation, group inheritance, forced password reset, logout in an impersonated session, audit-table outage, log permissions, purge); it reuses the helpers of `e2e.py`. `tests/logstore_probe.php <joomla-root> <actorId> <targetId>` checks the token claim / refusal race against the real database. `tests/browser_click.py` additionally clicks the real buttons in Chromium (Playwright). `tests/e2e.py` is the browser-like end-to-end suite used for the release (133 checks: both targets, ACL, restrictions, token replay / expiry / IP mismatch / junk, CSRF, MFA, parallel real sessions, mail, retention, `com_users` list buttons, User Actions Log, PHP warnings). It expects a throw-away Joomla at `http://127.0.0.1:8080` with the users `root`, `alice`, `bob`, `carol` (Manager), `mike` (Manager), `dave` (blocked), `sue` (Super User) - see the top of the script.
 
 ## Repository layout
 
@@ -77,7 +78,7 @@ Things to know:
 | `com_fgloginasuser/` | Component (administrator + site + media) |
 | `plg_system_fgloginasuser/` | System plugin: return bar, buttons and *Login as* column in `com_users` |
 | `plg_actionlog_fgloginasuser/` | Action log plugin: language strings for the User Actions Log |
-| `tests/` | End-to-end suite (`e2e.py`), review regression and feature tests (`audit.py`, `release110.py`, `release111.py`, `logstore_probe.php`) and real-browser click test (`browser_click.py`) |
+| `tests/` | End-to-end suite (`e2e.py`), review regression and feature tests (`audit.py`, `release110.py`, `release111.py`, `release112.py`, `logstore_probe.php`) and real-browser click test (`browser_click.py`) |
 | `build.sh` | Builds `dist/pkg_fgloginasuser_vX.X.X.zip` and regenerates `updates.xml` |
 | `updates.xml` | Joomla update server feed (generated) |
 
@@ -102,5 +103,5 @@ Part of the FG extension series by [FGcodework](https://github.com/FGcodework). 
 ## Known limitations
 
 - The one-time login token is a bearer credential (valid 60 s, single use, bound to the IP by default); whoever holds it within that time can use it.
-- No step-up authentication (password / second factor) before an impersonation starts; a candidate for a later release.
+- The identity confirmation cannot ask for second factors that need the browser or send a code on request (WebAuthn, e-mail); an account with only those is asked for the password only. Its limit on wrong attempts is per session.
 - Viewing the audit log needs the separate permission `Log` (`fgloginasuser.logs`).

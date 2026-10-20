@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.2 - 2026-10-20
+
+- **Confirm identity before logging in as another user** (new option, **off by default**): the dialog asks the administrator for their own password and, with *Password and second factor code*, for a code of their second factor (TOTP, YubiKey; core's try limit applies). A stolen or left-open administrator session is therefore not enough. The confirmation is remembered for a configurable time (5 minutes by default), only for that very user, never in an impersonated session. Wrong attempts are limited per session (5, then 15 minutes lock) and recorded as denied. WebAuthn and e-mail second factors cannot be asked for in this dialog; an account that has only those is asked for the password only. The password is never stored or logged.
+- Tests: `tests/release112.py` (includes a real TOTP code).
+
 ## 1.1.1 - 2026-10-20
 
 - **Predefined reasons**: Options -> Security has a list of reasons; the dialog then shows a drop-down (plus an optional note, or the text of *Other...*, which can be switched off). A reason picked from the list is stored as `Label` or `Label: note`. With *Allow other reasons* off, the server accepts only listed reasons.

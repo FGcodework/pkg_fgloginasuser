@@ -9,6 +9,7 @@
 namespace FG\Component\Fgloginasuser\Administrator\Service;
 
 use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
@@ -88,7 +89,7 @@ final class ButtonRenderer
 
         $form = '<form id="fgLasForm" action="' . self::e(Route::_('index.php?option=com_fgloginasuser&task=impersonate.start', false))
             . '" method="post" class="d-none"><input type="hidden" name="id" value="">'
-            . '<input type="hidden" name="client" value=""><input type="hidden" name="reason" value="">' . HTMLHelper::_('form.token') . '</form>';
+            . '<input type="hidden" name="client" value=""><input type="hidden" name="reason" value=""><input type="hidden" name="stepup_password" value=""><input type="hidden" name="stepup_code" value="">' . HTMLHelper::_('form.token') . '</form>';
 
         // Confirmation (backend switch) and reason, in one styled dialog. Own element, not nested in any form;
         // users.js falls back to window.confirm / window.prompt when <dialog> is not supported.
@@ -122,7 +123,25 @@ final class ButtonRenderer
             }
         }
 
-        $dialog = '<dialog id="fgLasDialog" class="fg-las-dialog" aria-labelledby="fgLasDialogTitle" data-reason-mode="' . $mode . '"'
+        // Re-authentication (off by default); not asked while a recent check of this administrator is still valid.
+        $stepBlock = '';
+        $stepOn    = 0;
+        $app       = Factory::getApplication();
+        $paramsAll = ComponentHelper::getParams('com_fgloginasuser');
+        $me        = $app->getIdentity();
+
+        if ($me && $me->id && StepUp::mode($paramsAll) > 0 && !StepUp::isFresh($app, $paramsAll, $me)) {
+            $stepOn    = 1;
+            $stepBlock = '<label class="fg-las-dialog-label" for="fgLasStepPw">' . $e('COM_FGLOGINASUSER_DIALOG_STEPUP_PASSWORD') . '</label>'
+                . '<input type="password" id="fgLasStepPw" class="form-control mb-2" autocomplete="current-password" required>';
+
+            if (StepUp::needsCode($app, $paramsAll, $me)) {
+                $stepBlock .= '<label class="fg-las-dialog-label" for="fgLasStepCode">' . $e('COM_FGLOGINASUSER_DIALOG_STEPUP_CODE') . '</label>'
+                    . '<input type="text" id="fgLasStepCode" class="form-control mb-2" inputmode="numeric" autocomplete="one-time-code" required>';
+            }
+        }
+
+        $dialog = '<dialog id="fgLasDialog" class="fg-las-dialog" aria-labelledby="fgLasDialogTitle" data-reason-mode="' . $mode . '" data-stepup="' . $stepOn . '"'
             . ' data-title-administrator="' . $e('COM_FGLOGINASUSER_DIALOG_TITLE') . '" data-title-site="' . $e('COM_FGLOGINASUSER_DIALOG_TITLE_SITE') . '"'
             . ' data-ok-administrator="' . $e('COM_FGLOGINASUSER_DIALOG_OK') . '" data-ok-site="' . $e('COM_FGLOGINASUSER_DIALOG_OK_SITE') . '">'
             . '<form method="dialog">'
@@ -130,6 +149,7 @@ final class ButtonRenderer
             . '<h2 id="fgLasDialogTitle" class="fg-las-dialog-title"></h2></div>'
             . '<p class="fg-las-dialog-body" data-for="administrator">' . $e('COM_FGLOGINASUSER_DIALOG_BODY') . '</p>'
             . '<p class="fg-las-dialog-body" data-for="site">' . $e('COM_FGLOGINASUSER_DIALOG_BODY_SITE') . '</p>'
+            . $stepBlock
             . $reasonBlock
             . '<div class="fg-las-dialog-actions">'
             . '<button type="submit" value="cancel" id="fgLasDialogCancel" class="btn btn-secondary" formnovalidate autofocus>' . $e('JCANCEL') . '</button>'

@@ -18,6 +18,9 @@
   const reasonField = document.getElementById('fgLasReason');
   const reasonSelect = document.getElementById('fgLasReasonSelect');
   const reasonLabel = document.getElementById('fgLasReasonLabel');
+  const stepOn = dialog ? dialog.dataset.stepup === '1' : false;
+  const stepPw = document.getElementById('fgLasStepPw');
+  const stepCode = document.getElementById('fgLasStepCode');
 
   // With predefined reasons the text field is a note to a preset, or the text of "Other".
   const syncReason = () => {
@@ -68,17 +71,24 @@
 
     const client = button.dataset.client;
     const start = (reason) => {
+      form.elements.stepup_password.value = stepPw ? stepPw.value : '';
+      form.elements.stepup_code.value = stepCode ? stepCode.value.trim() : '';
       form.elements.id.value = button.dataset.id;
       form.elements.client.value = client;
       form.elements.reason.value = reason || '';
       form.target = button.dataset.newTab === '1' ? '_blank' : '';
       form.submit();
+      // The secrets are only needed for the submit itself.
+      setTimeout(() => {
+        form.elements.stepup_password.value = '';
+        form.elements.stepup_code.value = '';
+      }, 1000);
     };
 
     const confirmText = button.dataset.confirm;
 
     // Frontend without a reason question starts at once; the backend switch always asks first.
-    if (!confirmText && reasonMode === 0) {
+    if (!confirmText && reasonMode === 0 && !stepOn) {
       start();
 
       return;
@@ -95,6 +105,12 @@
       if (reasonField) {
         reasonField.value = '';
       }
+
+      [stepPw, stepCode].forEach((input) => {
+        if (input) {
+          input.value = '';
+        }
+      });
 
       if (reasonSelect) {
         reasonSelect.value = '';

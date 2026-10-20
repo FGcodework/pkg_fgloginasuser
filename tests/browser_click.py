@@ -84,6 +84,27 @@ with sync_playwright() as p:
         tab.close()
         subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_REMOVE(params,'$.reason_presets') where element='com_fgloginasuser' and type='component'"], check=True)
 
+        # step-up (off by default): the dialog asks for the administrator's password
+        subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_SET(COALESCE(NULLIF(params,''),'{}'),'$.stepup_mode',1) where element='com_fgloginasuser' and type='component'"], check=True)
+        open_screen(pg, screen)
+        pg.locator('.fg-las-btn[data-client="site"]').first.click()
+        pg.wait_for_selector('#fgLasDialog[open]', timeout=5000)
+        check(screen + ': step-up: password field in the dialog', pg.locator('#fgLasStepPw').is_visible())
+        pg.click('#fgLasDialogOk')
+        pg.wait_for_timeout(400)
+        check(screen + ': step-up: an empty password keeps the dialog open', pg.locator('#fgLasDialog[open]').count() == 1)
+        pg.fill('#fgLasStepPw', 'Rootpass-12345!')
+        with ctx.expect_page(timeout=15000) as new:
+            pg.click('#fgLasDialogOk')
+        tab = new.value
+        tab.wait_for_load_state()
+        tab.wait_for_timeout(800)
+        check(screen + ': step-up: the right password starts the login', tab.locator('#fg-las-bar').count() == 1, tab.url)
+        tab.close()
+        open_screen(pg, screen)
+        check(screen + ': step-up: the password is not asked again while the confirmation is valid', pg.locator('#fgLasStepPw').count() == 0)
+        subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_REMOVE(params,'$.stepup_mode') where element='com_fgloginasuser' and type='component'"], check=True)
+
         # required reason: an empty field keeps the dialog open
         subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_SET(COALESCE(NULLIF(params,''),'{}'),'$.reason_mode',2) where element='com_fgloginasuser' and type='component'"], check=True)
         open_screen(pg, screen)

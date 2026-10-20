@@ -17,6 +17,7 @@ use FG\Component\Fgloginasuser\Administrator\Service\Justification;
 use FG\Component\Fgloginasuser\Administrator\Service\LogStore;
 use FG\Component\Fgloginasuser\Administrator\Service\Notifier;
 use FG\Component\Fgloginasuser\Administrator\Service\SessionSwitcher;
+use FG\Component\Fgloginasuser\Administrator\Service\StepUp;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -81,6 +82,21 @@ class ImpersonateController extends BaseController
 
         if (($reasonError = Justification::validate($params, $reason)) !== null) {
             $this->deny($log, $actor, $target, $targetId, $client, $ip, $reasonError);
+
+            return;
+        }
+
+        // Re-authentication of the administrator (off by default). Never passed on or stored.
+        $stepError = StepUp::verify(
+            $this->app,
+            $params,
+            $actor,
+            (string) $this->input->post->get('stepup_password', '', 'RAW'),
+            (string) $this->input->post->getString('stepup_code', '')
+        );
+
+        if ($stepError !== null) {
+            $this->deny($log, $actor, $target, $targetId, $client, $ip, $stepError);
 
             return;
         }

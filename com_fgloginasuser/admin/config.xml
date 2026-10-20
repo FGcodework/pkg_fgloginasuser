@@ -144,6 +144,29 @@
 			<option value="1">JYES</option>
 		</field>
 		<field
+			name="stepup_mode"
+			type="list"
+			label="COM_FGLOGINASUSER_CONFIG_STEPUP_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_STEPUP_DESC"
+			default="0"
+			filter="integer"
+			>
+			<option value="0">COM_FGLOGINASUSER_CONFIG_STEPUP_OFF</option>
+			<option value="1">COM_FGLOGINASUSER_CONFIG_STEPUP_PASSWORD</option>
+			<option value="2">COM_FGLOGINASUSER_CONFIG_STEPUP_MFA</option>
+		</field>
+		<field
+			name="stepup_minutes"
+			type="number"
+			label="COM_FGLOGINASUSER_CONFIG_STEPUP_MIN_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_STEPUP_MIN_DESC"
+			default="5"
+			min="1"
+			max="60"
+			filter="integer"
+			showon="stepup_mode!:0"
+		/>
+		<field
 			name="allow_superusers"
 			type="radio"
 			layout="joomla.form.field.radio.switcher"
