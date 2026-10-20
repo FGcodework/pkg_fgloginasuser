@@ -16,6 +16,46 @@
   const canDialog = dialog && typeof dialog.showModal === 'function';
   const reasonMode = dialog ? parseInt(dialog.dataset.reasonMode || '0', 10) : 0;
   const reasonField = document.getElementById('fgLasReason');
+  const reasonSelect = document.getElementById('fgLasReasonSelect');
+  const reasonLabel = document.getElementById('fgLasReasonLabel');
+
+  // With predefined reasons the text field is a note to a preset, or the text of "Other".
+  const syncReason = () => {
+    if (!reasonSelect || !reasonField) {
+      return;
+    }
+
+    const value = reasonSelect.value;
+
+    reasonField.hidden = value === '';
+    reasonLabel.hidden = value === '';
+    reasonField.required = value === 'other';
+    reasonLabel.textContent = value === 'other' ? reasonField.dataset.labelOther : reasonField.dataset.labelNote;
+  };
+
+  const currentReason = () => {
+    const text = reasonField ? reasonField.value.trim() : '';
+
+    if (!reasonSelect) {
+      return text;
+    }
+
+    const value = reasonSelect.value;
+
+    if (value === 'other') {
+      return text;
+    }
+
+    if (value.startsWith('p:')) {
+      return value.slice(2) + (text ? ': ' + text : '');
+    }
+
+    return '';
+  };
+
+  if (reasonSelect) {
+    reasonSelect.addEventListener('change', syncReason);
+  }
 
   document.addEventListener('click', (event) => {
     const button = event.target.closest('.fg-las-btn');
@@ -56,10 +96,15 @@
         reasonField.value = '';
       }
 
+      if (reasonSelect) {
+        reasonSelect.value = '';
+        syncReason();
+      }
+
       dialog.returnValue = '';
       dialog.addEventListener('close', () => {
         if (dialog.returnValue === 'ok') {
-          start(reasonField ? reasonField.value : '');
+          start(currentReason());
         }
       }, { once: true });
       dialog.showModal();

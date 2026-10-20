@@ -30,6 +30,15 @@
 			<option value="ended">COM_FGLOGINASUSER_STATUS_ENDED</option>
 			<option value="denied">COM_FGLOGINASUSER_STATUS_DENIED</option>
 		</field>
+		<field
+			name="reason"
+			type="list"
+			label="COM_FGLOGINASUSER_COL_REASON"
+			class="js-select-submit-on-change"
+			>
+			<option value="">COM_FGLOGINASUSER_FILTER_REASON</option>
+			<option value="__none__">COM_FGLOGINASUSER_FILTER_REASON_NONE</option>
+		</field>
 	</fields>
 	<fields name="list">
 		<field

@@ -42,6 +42,7 @@ class LogsModel extends ListModel
         $id .= ':' . $this->getState('filter.search');
         $id .= ':' . $this->getState('filter.client');
         $id .= ':' . $this->getState('filter.status');
+        $id .= ':' . $this->getState('filter.reason');
 
         return parent::getStoreId($id);
     }
@@ -76,6 +77,19 @@ class LogsModel extends ListModel
 
         if (\in_array($status, ['pending', 'active', 'ended', 'denied'], true)) {
             $query->where($db->quoteName('a.status') . ' = :status')->bind(':status', $status);
+        }
+
+        $reason = (string) $this->getState('filter.reason');
+
+        if ($reason === '__none__') {
+            $query->where($db->quoteName('a.reason') . ' = ' . $db->quote(''));
+        } elseif ($reason !== '') {
+            // A preset, with or without a note ("Label" or "Label: note").
+            $exact = $reason;
+            $like  = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $reason) . ': %';
+            $query->where('(' . $db->quoteName('a.reason') . ' = :rexact OR ' . $db->quoteName('a.reason') . ' LIKE :rlike)')
+                ->bind(':rexact', $exact)
+                ->bind(':rlike', $like);
         }
 
         $query->order(

@@ -111,6 +111,39 @@
 			<option value="2">COM_FGLOGINASUSER_CONFIG_REASON_REQUIRED</option>
 		</field>
 		<field
+			name="reason_presets"
+			type="subform"
+			label="COM_FGLOGINASUSER_CONFIG_PRESETS_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_PRESETS_DESC"
+			multiple="true"
+			min="0"
+			buttons="add,remove,move"
+			layout="joomla.form.field.subform.repeatable-table"
+			showon="reason_mode!:0"
+			>
+			<form>
+				<field
+					name="label"
+					type="text"
+					label="COM_FGLOGINASUSER_CONFIG_PRESET_ITEM"
+					maxlength="100"
+				/>
+			</form>
+		</field>
+		<field
+			name="reason_other"
+			type="radio"
+			layout="joomla.form.field.radio.switcher"
+			label="COM_FGLOGINASUSER_CONFIG_REASON_OTHER_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_REASON_OTHER_DESC"
+			default="1"
+			filter="integer"
+			showon="reason_mode!:0"
+			>
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+		<field
 			name="allow_superusers"
 			type="radio"
 			layout="joomla.form.field.radio.switcher"

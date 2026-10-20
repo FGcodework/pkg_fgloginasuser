@@ -79,8 +79,8 @@ class ImpersonateController extends BaseController
 
         $reason = Justification::clean($this->input->post->getString('reason', ''));
 
-        if ($reason === '' && Justification::mode($params) === 2) {
-            $this->deny($log, $actor, $target, $targetId, $client, $ip, 'COM_FGLOGINASUSER_ERR_REASON');
+        if (($reasonError = Justification::validate($params, $reason)) !== null) {
+            $this->deny($log, $actor, $target, $targetId, $client, $ip, $reasonError);
 
             return;
         }

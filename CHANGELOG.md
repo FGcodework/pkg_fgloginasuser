@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 - 2026-10-20
+
+- **Predefined reasons**: Options -> Security has a list of reasons; the dialog then shows a drop-down (plus an optional note, or the text of *Other...*, which can be switched off). A reason picked from the list is stored as `Label` or `Label: note`. With *Allow other reasons* off, the server accepts only listed reasons.
+- **Logs filter by reason**: with predefined reasons configured, the Logs screen has a *reason* filter (each reason also matches its entries with a note) and *no reason given*.
+- Tests: `tests/release111.py`; `browser_click.py` also drives the drop-down.
+
 ## 1.1.0 - 2026-10-20
 
 Feature release (the "later" items of the 1.0.5 review).

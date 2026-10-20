@@ -92,11 +92,35 @@ final class ButtonRenderer
 
         // Confirmation (backend switch) and reason, in one styled dialog. Own element, not nested in any form;
         // users.js falls back to window.confirm / window.prompt when <dialog> is not supported.
-        $reasonBlock = $mode > 0
-            ? '<label class="fg-las-dialog-label" for="fgLasReason">' . $e($mode === 2 ? 'COM_FGLOGINASUSER_DIALOG_REASON_REQUIRED' : 'COM_FGLOGINASUSER_DIALOG_REASON')
-                . '</label><textarea id="fgLasReason" class="form-control" rows="2" maxlength="' . Justification::MAX . '"'
-                . ($mode === 2 ? ' required' : '') . '></textarea>'
-            : '';
+        $reasonBlock = '';
+
+        if ($mode > 0) {
+            $params  = ComponentHelper::getParams('com_fgloginasuser');
+            $presets = Justification::presets($params);
+            $other   = Justification::otherAllowed($params);
+
+            if ($presets !== []) {
+                $options = '<option value="">' . $e($mode === 2 ? 'COM_FGLOGINASUSER_DIALOG_CHOOSE' : 'COM_FGLOGINASUSER_DIALOG_NO_REASON') . '</option>';
+
+                foreach ($presets as $label) {
+                    $options .= '<option value="p:' . self::e($label) . '">' . self::e($label) . '</option>';
+                }
+
+                if ($other) {
+                    $options .= '<option value="other">' . $e('COM_FGLOGINASUSER_DIALOG_OTHER') . '</option>';
+                }
+
+                $reasonBlock = '<label class="fg-las-dialog-label" for="fgLasReasonSelect">' . $e($mode === 2 ? 'COM_FGLOGINASUSER_DIALOG_REASON_SELECT_REQUIRED' : 'COM_FGLOGINASUSER_DIALOG_REASON_SELECT')
+                    . '</label><select id="fgLasReasonSelect" class="form-select mb-2"' . ($mode === 2 ? ' required' : '') . '>' . $options . '</select>'
+                    . '<label class="fg-las-dialog-label" for="fgLasReason" id="fgLasReasonLabel" hidden></label>'
+                    . '<textarea id="fgLasReason" class="form-control" rows="2" maxlength="' . Justification::MAX . '" hidden'
+                    . ' data-label-note="' . $e('COM_FGLOGINASUSER_DIALOG_NOTE') . '" data-label-other="' . $e('COM_FGLOGINASUSER_DIALOG_OTHER_TEXT') . '"></textarea>';
+            } else {
+                $reasonBlock = '<label class="fg-las-dialog-label" for="fgLasReason">' . $e($mode === 2 ? 'COM_FGLOGINASUSER_DIALOG_REASON_REQUIRED' : 'COM_FGLOGINASUSER_DIALOG_REASON')
+                    . '</label><textarea id="fgLasReason" class="form-control" rows="2" maxlength="' . Justification::MAX . '"'
+                    . ($mode === 2 ? ' required' : '') . '></textarea>';
+            }
+        }
 
         $dialog = '<dialog id="fgLasDialog" class="fg-las-dialog" aria-labelledby="fgLasDialogTitle" data-reason-mode="' . $mode . '"'
             . ' data-title-administrator="' . $e('COM_FGLOGINASUSER_DIALOG_TITLE') . '" data-title-site="' . $e('COM_FGLOGINASUSER_DIALOG_TITLE_SITE') . '"'

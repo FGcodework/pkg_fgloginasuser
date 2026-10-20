@@ -62,6 +62,28 @@ with sync_playwright() as p:
         check(screen + ': ... with the reason and the end time', 'Browser test reason' in tab.locator('#fg-las-bar').inner_text() and 'ends automatically' in tab.locator('#fg-las-bar').inner_text(), tab.locator('#fg-las-bar').inner_text() if tab.locator('#fg-las-bar').count() else '')
         tab.close()
 
+        # predefined reasons: drop-down, "Other..." needs text, preset + note is stored as "Label: note"
+        subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_SET(COALESCE(NULLIF(params,''),'{}'),'$.reason_presets',JSON_OBJECT('reason_presets0',JSON_OBJECT('label','Customer support'),'reason_presets1',JSON_OBJECT('label','Permissions test'))) where element='com_fgloginasuser' and type='component'"], check=True)
+        open_screen(pg, screen)
+        pg.locator('.fg-las-btn[data-client="site"]').first.click()
+        pg.wait_for_selector('#fgLasDialog[open]', timeout=5000)
+        check(screen + ': drop-down offered, text field hidden until a choice', pg.locator('#fgLasReasonSelect').is_visible() and not pg.locator('#fgLasReason').is_visible())
+        pg.select_option('#fgLasReasonSelect', 'other')
+        check(screen + ': "Other..." shows the text field', pg.locator('#fgLasReason').is_visible())
+        pg.click('#fgLasDialogOk')
+        pg.wait_for_timeout(400)
+        check(screen + ': "Other..." with empty text keeps the dialog open', pg.locator('#fgLasDialog[open]').count() == 1)
+        pg.select_option('#fgLasReasonSelect', 'p:Customer support')
+        pg.fill('#fgLasReason', 'ticket 9')
+        with ctx.expect_page(timeout=15000) as new:
+            pg.click('#fgLasDialogOk')
+        tab = new.value
+        tab.wait_for_load_state()
+        tab.wait_for_timeout(800)
+        check(screen + ': preset + note arrives as "Label: note"', 'Customer support: ticket 9' in (tab.locator('#fg-las-bar').inner_text() if tab.locator('#fg-las-bar').count() else ''))
+        tab.close()
+        subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_REMOVE(params,'$.reason_presets') where element='com_fgloginasuser' and type='component'"], check=True)
+
         # required reason: an empty field keeps the dialog open
         subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_SET(COALESCE(NULLIF(params,''),'{}'),'$.reason_mode',2) where element='com_fgloginasuser' and type='component'"], check=True)
         open_screen(pg, screen)
