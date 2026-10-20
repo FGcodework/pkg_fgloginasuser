@@ -67,6 +67,54 @@ final class LogStore
     }
 
     /**
+     * Creates a pending login-token row only while the administrator has fewer than
+     * $max unused tokens. The count and the insert run under a per-administrator named
+     * lock, so parallel requests cannot all pass the check before any of them inserts.
+     * Fails closed: when the lock cannot be obtained the token is not created.
+     *
+     * @return int|null  id of the new row, or null when the limit is reached
+     */
+    public function createPendingLimited(
+        User $actor,
+        ?User $target,
+        string $ip,
+        string $tokenHash,
+        string $tokenExpires,
+        string $reason,
+        int $max
+    ): ?int {
+        $lock = 'fgloginasuser.pending.' . (int) $actor->id;
+
+        $query = $this->db->createQuery()->select('GET_LOCK(:name, 5)')->bind(':name', $lock);
+        $got   = (int) $this->db->setQuery($query)->loadResult();
+
+        if ($got !== 1) {
+            return null;
+        }
+
+        try {
+            if ($this->countPending((int) $actor->id) >= $max) {
+                return null;
+            }
+
+            return $this->create(
+                $actor,
+                $target,
+                'site',
+                self::STATUS_PENDING,
+                $ip,
+                '',
+                $tokenHash,
+                $tokenExpires,
+                $reason
+            );
+        } finally {
+            $query = $this->db->createQuery()->select('RELEASE_LOCK(:name)')->bind(':name', $lock);
+            $this->db->setQuery($query)->loadResult();
+        }
+    }
+
+    /**
      * Number of unused, unexpired login tokens of one administrator.
      */
     public function countPending(int $actorId): int

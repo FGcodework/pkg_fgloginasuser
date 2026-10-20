@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.4 - 2026-10-20
+
+- **Limit of unused login links is race-proof**: the check of *Maximum unused login links* and the insert of the new token used to be two separate steps, so parallel requests of one administrator could all pass the check (measured: limit 3, 12 parallel requests, 4-5 tokens created). Both now run as one step under a per-administrator database lock (`GET_LOCK`) in `LogStore::createPendingLimited()`. If the lock cannot be obtained the request is refused (fails closed). The one-time token itself was never affected; its consumption was already an atomic conditional update.
+- Tests: `tests/release124.py` (parallel starts never exceed the limit).
+
 ## 1.2.3 - 2026-10-20
 
 - **Log clean-up never deletes a live impersonation**: *Delete all* and the retention setting used to delete "active" rows older than a day (and retention by age deleted any row), although with *Maximum duration* 0 a session can live longer; its end was then recorded nowhere. Active rows are now never deleted by age. Instead each active impersonation remembers its session (SHA-256 of the session id, new column `session_hash`, update script `1.2.3.sql`), and a row is closed ("Ended: the session no longer exists") only when that session is verifiably gone from the session table. Rows without a recorded session (older versions) or with sessions kept outside the database are only *presumed* ended after a day, labelled as such, and marked, not deleted.
