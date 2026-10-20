@@ -81,7 +81,7 @@ Things to know:
 
 1. Bump `<version>` in all four manifests, add a `## X.X.X - date` entry to `CHANGELOG.md`.
 2. Run `./build.sh` (checks that the versions agree, builds the ZIP, regenerates `updates.xml`) and commit.
-3. Tag and push: `git tag vX.X.X && git push origin main vX.X.X`. The *Release* workflow lints the sources, verifies that tag, manifest and `updates.xml` agree, and publishes the GitHub release with the ZIP attached.
+3. Tag and push: `git tag vX.X.X && git push origin master vX.X.X`. The *Release* workflow lints the sources, verifies that tag, manifest and `updates.xml` agree, and publishes the GitHub release with the ZIP attached.
 
 ## Support
 

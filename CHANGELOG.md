@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7 - 2026-10-20
+
+- The update server (`updates.xml`) and the release workflow now refer to the `master` branch (1.0.6 pointed to `main`). No functional change to the extension code.
+
 ## 1.0.6 - 2026-10-20
 
 - Joomla update server: the package manifest now points to `updates.xml` in the GitHub repository, so new releases show up in *System -> Update -> Extensions*. `build.sh` regenerates `updates.xml` and refuses to build when the manifest versions or the changelog disagree.

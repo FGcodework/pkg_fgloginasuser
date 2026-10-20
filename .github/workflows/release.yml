@@ -38,4 +38,4 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" dist/*.zip \
             --title "FG Login as User ${GITHUB_REF_NAME#v}" \
-            --notes "See [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md). Install \`pkg_fgloginasuser_${GITHUB_REF_NAME}.zip\` (component + system plugin + action log plugin)."
+            --notes "See [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/master/CHANGELOG.md). Install \`pkg_fgloginasuser_${GITHUB_REF_NAME}.zip\` (component + system plugin + action log plugin)."
