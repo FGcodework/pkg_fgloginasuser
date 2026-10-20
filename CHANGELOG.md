@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.5 - 2026-10-20
+
+- **Returning to the original administrator re-checks the account like the start does**: ending a backend impersonation verified only that the account exists, is not blocked and may log in to the backend, but not that it is activated, which the start checks. An account deactivated (activation not cleared) during an impersonation, without being blocked, could be restored into the session (reproduced). The check is now one method, `AccessPolicy::canRestore()`: account exists, not blocked, activated, `core.login.admin`. It deliberately does not require rights to this tool, so leaving a foreign identity always stays possible; if the account may not be restored the session simply ends.
+- Tests: `tests/release125.py`.
+
 ## 1.2.4 - 2026-10-20
 
 - **Limit of unused login links is race-proof**: the check of *Maximum unused login links* and the insert of the new token used to be two separate steps, so parallel requests of one administrator could all pass the check (measured: limit 3, 12 parallel requests, 4-5 tokens created). Both now run as one step under a per-administrator database lock (`GET_LOCK`) in `LogStore::createPendingLimited()`. If the lock cannot be obtained the request is refused (fails closed). The one-time token itself was never affected; its consumption was already an atomic conditional update.

@@ -66,6 +66,23 @@ final class AccessPolicy
         return null;
     }
 
+    /**
+     * May the original administrator be put back into the session when an impersonation ends?
+     * Re-checks that the account exists, is not blocked, is activated and may still log in to the
+     * backend. Deliberately does NOT require rights to this tool: leaving a foreign identity must
+     * stay possible, and it only ever restores the account the session started from.
+     */
+    public static function canRestore(User $actor): bool
+    {
+        $activation = trim((string) $actor->activation);
+
+        return !$actor->guest
+            && (int) $actor->id > 0
+            && (int) $actor->block !== 1
+            && ($activation === '' || $activation === '0')
+            && $actor->authorise('core.login.admin');
+    }
+
     public function evaluate(User $actor, User $target, string $client): ?string
     {
         if (($error = $this->evaluateActor($actor, $client)) !== null) {

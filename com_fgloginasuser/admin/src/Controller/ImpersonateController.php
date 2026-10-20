@@ -196,7 +196,7 @@ class ImpersonateController extends BaseController
 
         $actor = $container->get(UserFactoryInterface::class)->loadUserById((int) $marker['actor_id']);
 
-        if (!$actor->id || (int) $actor->block === 1 || !$actor->authorise('core.login.admin')) {
+        if (!AccessPolicy::canRestore($actor)) {
             // The original account can no longer log in: end the session instead of restoring it.
             SessionSwitcher::destroyCurrent($this->app);
             $this->setRedirect(Route::_('index.php', false));
