@@ -30,7 +30,7 @@ class LogModel extends AdminModel
     public function purgeAll(): bool
     {
         try {
-            return (new LogStore($this->getDatabase()))->purgeFinished();
+            return (new LogStore($this->getDatabase()))->purgeFinished(\FG\Component\Fgloginasuser\Administrator\Service\Environment::sessionsInDatabase(\Joomla\CMS\Factory::getApplication()));
         } catch (\RuntimeException $e) {
             $this->setError($e->getMessage());
 

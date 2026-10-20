@@ -38,7 +38,7 @@ class HtmlView extends BaseHtmlView
         }
 
         // Retention also runs when the log is looked at, not only when somebody starts a new login.
-        (new LogStore(Factory::getContainer()->get(DatabaseInterface::class)))->purgeOlderThan((int) ComponentHelper::getParams('com_fgloginasuser')->get('log_retention_days', 365));
+        (new LogStore(Factory::getContainer()->get(DatabaseInterface::class)))->purgeOlderThan((int) ComponentHelper::getParams('com_fgloginasuser')->get('log_retention_days', 365), Environment::sessionsInDatabase(Factory::getApplication()));
 
         $this->items         = $model->getItems();
         $this->pagination    = $model->getPagination();

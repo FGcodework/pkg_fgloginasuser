@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.3 - 2026-10-20
+
+- **Log clean-up never deletes a live impersonation**: *Delete all* and the retention setting used to delete "active" rows older than a day (and retention by age deleted any row), although with *Maximum duration* 0 a session can live longer; its end was then recorded nowhere. Active rows are now never deleted by age. Instead each active impersonation remembers its session (SHA-256 of the session id, new column `session_hash`, update script `1.2.3.sql`), and a row is closed ("Ended: the session no longer exists") only when that session is verifiably gone from the session table. Rows without a recorded session (older versions) or with sessions kept outside the database are only *presumed* ended after a day, labelled as such, and marked, not deleted.
+- The Logs screen reconciles the rows when it is opened, so the status is accurate.
+- Tests: `tests/release123.py`.
+
 ## 1.2.2 - 2026-10-20
 
 - **Dependency on the system plugin made visible**: the Users and Logs screens show a warning when *System - FG Login as User* is disabled (what is lost for running impersonations and what to do). New README section *The system plugin is part of the security*.

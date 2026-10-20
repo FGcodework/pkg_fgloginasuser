@@ -26,6 +26,14 @@ final class Environment
         return PluginHelper::isEnabled('system', 'fgloginasuser') ? '' : 'COM_FGLOGINASUSER_WARN_PLUGIN_OFF';
     }
 
+    /**
+     * Does Joomla keep its sessions in the database (so that a session can be looked up in #__session)?
+     */
+    public static function sessionsInDatabase(CMSApplicationInterface $app): bool
+    {
+        return (string) $app->get('session_handler', 'database') === 'database';
+    }
+
     public static function check(CMSApplicationInterface $app): ?string
     {
         // One session shared by site and administrator: the impersonated identity would also become the

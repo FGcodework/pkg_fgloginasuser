@@ -190,33 +190,101 @@ final class LogStore
     }
 
     /**
-     * Delete finished history only: ended and denied rows, expired unused tokens and "active" rows
-     * that have certainly outlived their session (older than a day). Unexpired tokens and recent
-     * active impersonations are kept.
+     * Remember which session an active impersonation lives in (SHA-256 of the session id, never the id itself),
+     * so that a log row can be told apart from a session that is really gone.
      */
-    public function purgeFinished(): bool
+    public function bindSession(int $id, string $sessionId): void
     {
-        $now     = Factory::getDate()->toSql();
+        $hash  = hash('sha256', $sessionId);
+        $query = $this->db->createQuery()
+            ->update($this->db->quoteName(self::TABLE))
+            ->set($this->db->quoteName('session_hash') . ' = :hash')
+            ->where($this->db->quoteName('id') . ' = :id')
+            ->bind(':hash', $hash)
+            ->bind(':id', $id, ParameterType::INTEGER);
+
+        $this->db->setQuery($query)->execute();
+    }
+
+    /**
+     * Close "active" rows whose session is verifiably gone (expired, or closed without the return link), so that
+     * the log tells the truth and nothing live is ever mistaken for dead. Rows are marked, never deleted here.
+     *
+     *  - Row with a recorded session: ended when that session is no longer in the session table.
+     *  - Row without one (made before the session was recorded) or with sessions kept outside the database
+     *    (nothing to look at): only presumed ended after a day, and labelled as such.
+     *
+     * @param   bool  $sessionsInDatabase  Joomla keeps sessions in #__session (Global Configuration -> Session Handler).
+     */
+    public function reconcileActive(bool $sessionsInDatabase = true): int
+    {
+        $active  = self::STATUS_ACTIVE;
+        $grace   = Factory::getDate('-5 minutes')->toSql();
         $dayAgo  = Factory::getDate('-1 day')->toSql();
+        $q       = fn (string $c): string => $this->db->quoteName($c);
+        $changed = 0;
+
+        $query = $this->db->createQuery()
+            ->select([$q('id'), $q('session_hash'), $q('started'), $q('created')])
+            ->from($q(self::TABLE))
+            ->where($q('status') . ' = :active')
+            ->where($q('created') . ' < :grace')
+            ->bind(':active', $active)
+            ->bind(':grace', $grace);
+
+        foreach ($this->db->setQuery($query)->loadObjectList() as $row) {
+            $note = null;
+
+            if ($row->session_hash !== '' && $sessionsInDatabase) {
+                $check = $this->db->createQuery()
+                    ->select('COUNT(*)')
+                    ->from($q('#__session'))
+                    ->where('SHA2(' . $q('session_id') . ', 256) = :hash')
+                    ->bind(':hash', $row->session_hash);
+
+                if ((int) $this->db->setQuery($check)->loadResult() === 0) {
+                    $note = 'COM_FGLOGINASUSER_NOTE_SESSION_GONE';
+                }
+            } elseif (($row->started ?: $row->created) < $dayAgo) {
+                $note = 'COM_FGLOGINASUSER_NOTE_SESSION_PRESUMED';
+            }
+
+            if ($note !== null) {
+                $this->end((int) $row->id, $note);
+                ++$changed;
+            }
+        }
+
+        return $changed;
+    }
+
+    /**
+     * Delete finished history only: ended and denied rows (except "presumed ended" ones) and expired unused tokens. Rows of impersonations that
+     * are still active - however old - and unexpired tokens are never deleted (see reconcileActive()).
+     */
+    public function purgeFinished(bool $sessionsInDatabase = true): bool
+    {
+        $this->reconcileActive($sessionsInDatabase);
+
+        $now     = Factory::getDate()->toSql();
         $ended   = self::STATUS_ENDED;
         $denied  = self::STATUS_DENIED;
         $pending = self::STATUS_PENDING;
-        $active  = self::STATUS_ACTIVE;
+        $presumed = 'COM_FGLOGINASUSER_NOTE_SESSION_PRESUMED';
         $q       = fn (string $c): string => $this->db->quoteName($c);
 
         $query = $this->db->createQuery()
             ->delete($q(self::TABLE))
             ->where(
-                '(' . $q('status') . ' IN (:ended, :denied)'
-                . ' OR (' . $q('status') . ' = :pending AND ' . $q('token_expires') . ' < :now)'
-                . ' OR (' . $q('status') . ' = :active AND ' . $q('created') . ' < :dayago))'
+                '((' . $q('status') . ' IN (:ended, :denied) AND ' . $q('note') . ' <> :presumed)'
+                . ' OR (' . $q('status') . ' = :pending AND ' . $q('token_expires') . ' < :now))'
             )
+            // "Presumed ended" may still be a live session: it stays until the retention removes it or someone deletes it by hand.
+            ->bind(':presumed', $presumed)
             ->bind(':ended', $ended)
             ->bind(':denied', $denied)
             ->bind(':pending', $pending)
-            ->bind(':now', $now)
-            ->bind(':active', $active)
-            ->bind(':dayago', $dayAgo);
+            ->bind(':now', $now);
 
         $this->db->setQuery($query)->execute();
 
@@ -224,20 +292,25 @@ final class LogStore
     }
 
     /**
-     * Delete rows older than $days (0 = keep forever).
+     * Delete rows older than $days (0 = keep forever), except impersonations that are still active.
      */
-    public function purgeOlderThan(int $days): void
+    public function purgeOlderThan(int $days, bool $sessionsInDatabase = true): void
     {
+        $this->reconcileActive($sessionsInDatabase);
+
         if ($days <= 0) {
             return;
         }
 
         $cutoff = Factory::getDate('-' . $days . ' days')->toSql();
+        $active = self::STATUS_ACTIVE;
 
         $query = $this->db->createQuery()
             ->delete($this->db->quoteName(self::TABLE))
             ->where($this->db->quoteName('created') . ' < :cutoff')
-            ->bind(':cutoff', $cutoff);
+            ->where($this->db->quoteName('status') . ' <> :active')
+            ->bind(':cutoff', $cutoff)
+            ->bind(':active', $active);
 
         $this->db->setQuery($query)->execute();
     }

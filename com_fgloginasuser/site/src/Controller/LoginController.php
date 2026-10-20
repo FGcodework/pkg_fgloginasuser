@@ -134,6 +134,12 @@ class LoginController extends BaseController
         }
 
         // Reported only once the identity has really been switched.
+        try {
+            $log->bindSession((int) $row->id, $app->getSession()->getId());
+        } catch (\Throwable $e) {
+            \Joomla\CMS\Log\Log::add('Could not record the session of an impersonation: ' . $e->getMessage(), \Joomla\CMS\Log\Log::WARNING, 'com_fgloginasuser');
+        }
+
         $reason = (string) ($row->reason ?? '');
 
         Notifier::send($app, $params, $actor->username, $target->username, AccessPolicy::CLIENT_SITE, $ip, $reason);

@@ -101,7 +101,7 @@ class ImpersonateController extends BaseController
             return;
         }
 
-        $log->purgeOlderThan((int) $params->get('log_retention_days', 365));
+        $log->purgeOlderThan((int) $params->get('log_retention_days', 365), Environment::sessionsInDatabase($this->app));
 
         if ($client === AccessPolicy::CLIENT_SITE) {
             $maxPending = max(1, min(100, (int) $params->get('max_pending', 10)));
@@ -156,6 +156,12 @@ class ImpersonateController extends BaseController
             $this->setMessage(Text::_($e->getMessage()), 'error');
 
             return;
+        }
+
+        try {
+            $log->bindSession($logId, $this->app->getSession()->getId());
+        } catch (\Throwable $e) {
+            \Joomla\CMS\Log\Log::add('Could not record the session of an impersonation: ' . $e->getMessage(), \Joomla\CMS\Log\Log::WARNING, 'com_fgloginasuser');
         }
 
         // Reported only once the identity has really been switched.

@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `#__fgloginasuser_logs` (
   `ip` varchar(45) NOT NULL DEFAULT '',
   `note` varchar(255) NOT NULL DEFAULT '',
   `reason` varchar(255) NOT NULL DEFAULT '',
+  `session_hash` char(64) NOT NULL DEFAULT '',
   `token_hash` char(64) DEFAULT NULL,
   `token_expires` datetime DEFAULT NULL,
   `created` datetime NOT NULL,
