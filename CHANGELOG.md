@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.4 - 2026-10-20
+
+- Fix: the title of the Options screen showed the raw key `com_fgloginasuser_configuration`; it is now "FG Login as User: Options" (Slovak: "Možnosti").
+
 ## 1.1.3 - 2026-10-20
 
 - **Limit of unused login links**: an administrator can have at most 10 frontend logins that were started but not yet opened (new option *Maximum unused login links per administrator*, 1-100). Further attempts are refused and recorded as denied until one is used or expires.
