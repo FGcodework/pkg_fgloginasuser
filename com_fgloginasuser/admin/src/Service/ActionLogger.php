@@ -28,6 +28,8 @@ final class ActionLogger
 
     public const STARTED_SITE  = 'COM_FGLOGINASUSER_ACTIONLOG_STARTED_SITE';
     public const STARTED_ADMIN = 'COM_FGLOGINASUSER_ACTIONLOG_STARTED_ADMIN';
+    public const STARTED_SITE_REASON  = 'COM_FGLOGINASUSER_ACTIONLOG_STARTED_SITE_REASON';
+    public const STARTED_ADMIN_REASON = 'COM_FGLOGINASUSER_ACTIONLOG_STARTED_ADMIN_REASON';
     public const ENDED         = 'COM_FGLOGINASUSER_ACTIONLOG_ENDED';
     public const DENIED        = 'COM_FGLOGINASUSER_ACTIONLOG_DENIED';
 
@@ -48,7 +50,7 @@ final class ActionLogger
         }
 
         try {
-            if (str_starts_with($reason, 'COM_')) {
+            if ($messageKey === self::DENIED && str_starts_with($reason, 'COM_')) {
                 $app->getLanguage()->load('com_fgloginasuser', JPATH_ADMINISTRATOR);
                 $reason = Reason::translate($reason);
             }

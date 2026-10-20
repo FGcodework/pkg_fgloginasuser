@@ -51,6 +51,21 @@ final class SessionSwitcher
     }
 
     /**
+     * Unix time at which a new impersonation must end (0 = no limit), from the parameter "max_minutes".
+     */
+    public static function deadline(\Joomla\Registry\Registry $params): int
+    {
+        $minutes = max(0, min(1440, (int) $params->get('max_minutes', 60)));
+
+        return $minutes > 0 ? time() + $minutes * 60 : 0;
+    }
+
+    public static function isExpired(array $marker): bool
+    {
+        return !empty($marker['expires']) && (int) $marker['expires'] <= time();
+    }
+
+    /**
      * Make $target the user of the current session. A non-null $marker records the
      * impersonation, null clears it (used when returning to the original user).
      *

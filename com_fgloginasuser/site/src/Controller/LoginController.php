@@ -35,7 +35,8 @@ use Joomla\Utilities\IpHelper;
 class LoginController extends BaseController
 {
     /**
-     * GET index.php?option=com_fgloginasuser&task=login.consume&token=...
+     * POST index.php?option=com_fgloginasuser&task=login.consume, field "token" (sent by the administrator's hand-over
+     * page, never as part of a URL).
      *
      * The token is the credential (256 random bits, stored only as a hash, single use, short
      * lived, optionally bound to the IP address that requested it), so no CSRF token applies.
@@ -48,7 +49,8 @@ class LoginController extends BaseController
 
         $home   = Uri::root();
         $params = ComponentHelper::getParams('com_fgloginasuser');
-        $token  = (string) $this->input->get->get('token', '', 'ALNUM');
+        // Only from the request body: a token in the query string would end up in logs and the browser history.
+        $token  = $this->input->getMethod() === 'POST' ? (string) $this->input->post->get('token', '', 'ALNUM') : '';
         $ip     = IpHelper::getIp();
 
         if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
@@ -120,6 +122,8 @@ class LoginController extends BaseController
                 'target_id'       => (int) $target->id,
                 'target_username' => $target->username,
                 'client'          => AccessPolicy::CLIENT_SITE,
+                'reason'          => (string) ($row->reason ?? ''),
+                'expires'         => SessionSwitcher::deadline($params),
             ]);
         } catch (ImpersonationException $e) {
             $log->markDenied((int) $row->id, $e->getMessage(), LogStore::STATUS_ACTIVE);
@@ -130,8 +134,10 @@ class LoginController extends BaseController
         }
 
         // Reported only once the identity has really been switched.
-        Notifier::send($app, $params, $actor->username, $target->username, AccessPolicy::CLIENT_SITE, $ip);
-        ActionLogger::log($app, ActionLogger::STARTED_SITE, (int) $actor->id, $actor->username, (int) $target->id, $target->username);
+        $reason = (string) ($row->reason ?? '');
+
+        Notifier::send($app, $params, $actor->username, $target->username, AccessPolicy::CLIENT_SITE, $ip, $reason);
+        ActionLogger::log($app, $reason !== '' ? ActionLogger::STARTED_SITE_REASON : ActionLogger::STARTED_SITE, (int) $actor->id, $actor->username, (int) $target->id, $target->username, $reason);
 
         $this->setRedirect($this->redirectUrl($params));
     }

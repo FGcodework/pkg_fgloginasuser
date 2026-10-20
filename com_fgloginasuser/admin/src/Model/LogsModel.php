@@ -52,7 +52,7 @@ class LogsModel extends ListModel
         $query = $db->createQuery();
 
         $query->select($db->quoteName(['a.id', 'a.actor_id', 'a.actor_username', 'a.target_id', 'a.target_username',
-            'a.client', 'a.status', 'a.ip', 'a.note', 'a.token_expires', 'a.created', 'a.started', 'a.ended']))
+            'a.client', 'a.status', 'a.ip', 'a.note', 'a.reason', 'a.token_expires', 'a.created', 'a.started', 'a.ended']))
             ->from($db->quoteName('#__fgloginasuser_logs', 'a'));
 
         $search = trim((string) $this->getState('filter.search'));
@@ -61,9 +61,9 @@ class LogsModel extends ListModel
             $like = '%' . $search . '%';
             $query->where(
                 '(' . $db->quoteName('a.actor_username') . ' LIKE :s1 OR ' . $db->quoteName('a.target_username') . ' LIKE :s2'
-                . ' OR ' . $db->quoteName('a.ip') . ' LIKE :s3 OR ' . $db->quoteName('a.note') . ' LIKE :s4)'
+                . ' OR ' . $db->quoteName('a.ip') . ' LIKE :s3 OR ' . $db->quoteName('a.note') . ' LIKE :s4 OR ' . $db->quoteName('a.reason') . ' LIKE :s5)'
             )
-                ->bind([':s1', ':s2', ':s3', ':s4'], $like);
+                ->bind([':s1', ':s2', ':s3', ':s4', ':s5'], $like);
         }
 
         $client = (string) $this->getState('filter.client');

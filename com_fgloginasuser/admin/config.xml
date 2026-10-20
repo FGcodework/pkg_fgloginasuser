@@ -88,6 +88,29 @@
 			<option value="1">JYES</option>
 		</field>
 		<field
+			name="max_minutes"
+			type="number"
+			label="COM_FGLOGINASUSER_CONFIG_MAXMIN_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_MAXMIN_DESC"
+			default="60"
+			min="0"
+			max="1440"
+			step="5"
+			filter="integer"
+		/>
+		<field
+			name="reason_mode"
+			type="list"
+			label="COM_FGLOGINASUSER_CONFIG_REASON_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_REASON_DESC"
+			default="1"
+			filter="integer"
+			>
+			<option value="0">COM_FGLOGINASUSER_CONFIG_REASON_OFF</option>
+			<option value="1">COM_FGLOGINASUSER_CONFIG_REASON_OPTIONAL</option>
+			<option value="2">COM_FGLOGINASUSER_CONFIG_REASON_REQUIRED</option>
+		</field>
+		<field
 			name="allow_superusers"
 			type="radio"
 			layout="joomla.form.field.radio.switcher"

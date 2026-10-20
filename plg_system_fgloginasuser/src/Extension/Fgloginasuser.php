@@ -38,6 +38,7 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
     {
         return [
             'onBeforeCompileHead' => 'onBeforeCompileHead',
+            'onAfterRoute'        => 'onAfterRoute',
             'onAfterRender'       => 'onAfterRender',
             // Before core's user plugin, which would end all sessions of the impersonated user.
             'onUserLogout'        => ['onUserLogout', Priority::MAX],
@@ -62,6 +63,24 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
         SessionSwitcher::destroyCurrent($app);
 
         $event->stopPropagation();
+    }
+
+    /**
+     * Absolute time limit: an impersonation older than "max_minutes" ends with the next request. The session is
+     * destroyed (not handed back), so the person has to sign in again.
+     */
+    public function onAfterRoute(): void
+    {
+        $app    = $this->getApplication();
+        $marker = $app ? SessionSwitcher::getMarker($app) : null;
+
+        if ($marker === null || $marker['client'] !== ($app->isClient('administrator') ? 'administrator' : 'site') || !SessionSwitcher::isExpired($marker)) {
+            return;
+        }
+
+        EndRecorder::record($app, $marker, 'COM_FGLOGINASUSER_NOTE_TIMEOUT');
+        SessionSwitcher::destroyCurrent($app);
+        $app->redirect($app->isClient('administrator') ? Uri::base() : Uri::root());
     }
 
     public function onBeforeCompileHead(): void
@@ -216,6 +235,27 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
         $app->setBody($body);
     }
 
+    /**
+     * Reason and remaining time shown in the bar.
+     */
+    private function barDetails(array $marker, callable $e): string
+    {
+        $html = '';
+
+        if (($marker['reason'] ?? '') !== '') {
+            $html .= '<span style="opacity:.9">' . $e(Text::sprintf('PLG_SYSTEM_FGLOGINASUSER_BAR_REASON', (string) $marker['reason'])) . '</span>';
+        }
+
+        if (!empty($marker['expires'])) {
+            $html .= '<span style="opacity:.9">' . $e(Text::sprintf(
+                'PLG_SYSTEM_FGLOGINASUSER_BAR_UNTIL',
+                Factory::getDate((int) $marker['expires'])->setTimezone(new \DateTimeZone($this->getApplication()->get('offset', 'UTC')))->format('H:i')
+            )) . '</span>';
+        }
+
+        return $html;
+    }
+
     private function injectBar(): void
     {
         $app = $this->getApplication();
@@ -261,6 +301,7 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
                 (string) ($marker['target_username'] ?? ''),
                 (string) ($marker['actor_username'] ?? '')
             )) . '</span>'
+            . $this->barDetails($marker, $e)
             . '<a href="' . $e($url) . '" style="background:#fff;color:#7c2d12;padding:6px 14px;border-radius:4px;'
             . 'font-weight:600;text-decoration:none">' . $e(Text::_($label)) . '</a></div>';
 

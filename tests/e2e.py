@@ -32,7 +32,14 @@ def scan(r):
     return r
 
 
+CONSUME_RE = re.compile(r'task=login\.consume(?:&token=([0-9a-zA-Z]*))?')
+
+
 class Browser:
+    """Browser-like session. Since 1.1.0 the login token travels in a POST body; this wrapper keeps the older
+    tests readable: the hand-over page is reported as a redirect to the consume URL, and a GET of such a URL
+    is sent as the POST the browser would make. The raw behaviour is tested in release110.py via .s directly."""
+
     def __init__(self):
         self.s = requests.Session()
 
@@ -41,11 +48,29 @@ class Browser:
 
     def get(self, u, **kw):
         kw.setdefault('allow_redirects', True)
+        m = CONSUME_RE.search(u)
+        params = kw.get('params') or {}
+        if m and (m.group(1) is not None or 'token' in params):
+            token = m.group(1) if m.group(1) is not None else params['token']
+            base = self._u(u).split('&token=')[0].split('?')[0] + '?option=com_fgloginasuser&task=login.consume'
+            kw.pop('params', None)
+            return scan(self.s.post(base, data={'token': token}, **kw))
         return scan(self.s.get(self._u(u), **kw))
 
     def post(self, u, data=None, **kw):
         kw.setdefault('allow_redirects', True)
-        return scan(self.s.post(self._u(u), data=data, **kw))
+        r = scan(self.s.post(self._u(u), data=data, **kw))
+        h = re.search(r'id="fgLasHandoff" method="post" action="([^"]+)"><input type="hidden" name="token" value="([0-9a-f]+)"', r.text or '')
+        if h and 'task=impersonate.start' in u:
+            fake = requests.Response()
+            fake.status_code = 303
+            fake.headers['Location'] = h.group(1).replace('&amp;', '&') + '&token=' + h.group(2)
+            fake._content = r.content
+            fake.url = r.url
+            fake.request = r.request
+            fake.history = []
+            return fake
+        return r
 
 
 def tok(html):

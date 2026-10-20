@@ -13,6 +13,7 @@ use FG\Component\Fgloginasuser\Administrator\Exception\ImpersonationException;
 use FG\Component\Fgloginasuser\Administrator\Service\ActionLogger;
 use FG\Component\Fgloginasuser\Administrator\Service\EndRecorder;
 use FG\Component\Fgloginasuser\Administrator\Service\Environment;
+use FG\Component\Fgloginasuser\Administrator\Service\Justification;
 use FG\Component\Fgloginasuser\Administrator\Service\LogStore;
 use FG\Component\Fgloginasuser\Administrator\Service\Notifier;
 use FG\Component\Fgloginasuser\Administrator\Service\SessionSwitcher;
@@ -76,6 +77,14 @@ class ImpersonateController extends BaseController
             return;
         }
 
+        $reason = Justification::clean($this->input->post->getString('reason', ''));
+
+        if ($reason === '' && Justification::mode($params) === 2) {
+            $this->deny($log, $actor, $target, $targetId, $client, $ip, 'COM_FGLOGINASUSER_ERR_REASON');
+
+            return;
+        }
+
         $log->purgeOlderThan((int) $params->get('log_retention_days', 365));
 
         if ($client === AccessPolicy::CLIENT_SITE) {
@@ -91,18 +100,17 @@ class ImpersonateController extends BaseController
                 $ip,
                 '',
                 hash('sha256', $token),
-                $expires
+                $expires,
+                $reason
             );
 
-            $this->setRedirect(
-                Uri::root() . 'index.php?option=com_fgloginasuser&task=login.consume&token=' . $token
-            );
+            $this->handOver($token);
 
             return;
         }
 
         // Backend: switch this very session.
-        $logId = $log->create($actor, $target, $client, LogStore::STATUS_ACTIVE, $ip);
+        $logId = $log->create($actor, $target, $client, LogStore::STATUS_ACTIVE, $ip, '', null, null, $reason);
 
         try {
             SessionSwitcher::switchTo($this->app, $target, [
@@ -112,6 +120,8 @@ class ImpersonateController extends BaseController
                 'target_id'       => (int) $target->id,
                 'target_username' => $target->username,
                 'client'          => AccessPolicy::CLIENT_ADMIN,
+                'reason'          => $reason,
+                'expires'         => SessionSwitcher::deadline($params),
             ]);
         } catch (ImpersonationException $e) {
             // Nothing was switched: record the failure instead of a login that never happened.
@@ -123,8 +133,8 @@ class ImpersonateController extends BaseController
         }
 
         // Reported only once the identity has really been switched.
-        Notifier::send($this->app, $params, $actor->username, $target->username, $client, $ip);
-        ActionLogger::log($this->app, ActionLogger::STARTED_ADMIN, (int) $actor->id, $actor->username, (int) $target->id, $target->username);
+        Notifier::send($this->app, $params, $actor->username, $target->username, $client, $ip, $reason);
+        ActionLogger::log($this->app, $reason !== '' ? ActionLogger::STARTED_ADMIN_REASON : ActionLogger::STARTED_ADMIN, (int) $actor->id, $actor->username, (int) $target->id, $target->username, $reason);
 
         $redirect = trim((string) $params->get('admin_redirect_url', ''));
 
@@ -168,6 +178,34 @@ class ImpersonateController extends BaseController
         SessionSwitcher::switchTo($this->app, $actor, null);
 
         $this->setRedirect(Route::_('index.php?option=com_fgloginasuser&view=users', false));
+    }
+
+    /**
+     * Hand the one-time token to the site in the body of a POST request, so that it never appears in a URL
+     * (browser history, server and proxy logs, Referer headers). The page submits itself with an external script
+     * (no inline script, works under a strict Content-Security-Policy); the button is the fallback.
+     */
+    private function handOver(string $token): void
+    {
+        $e      = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
+        $action = Uri::root() . 'index.php?option=com_fgloginasuser&task=login.consume';
+        $script = Uri::root(true) . '/media/com_fgloginasuser/js/handoff.js';
+
+        $this->app->setHeader('Content-Type', 'text/html; charset=utf-8', true);
+        $this->app->setHeader('Referrer-Policy', 'no-referrer', true);
+        $this->app->setHeader('Cache-Control', 'no-store, max-age=0', true);
+        $this->app->sendHeaders();
+
+        echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
+            . '<meta name="viewport" content="width=device-width, initial-scale=1"><title>' . $e(Text::_('COM_FGLOGINASUSER_HANDOFF_TITLE')) . '</title></head>'
+            . '<body style="font:16px/1.5 system-ui,sans-serif;margin:3rem;text-align:center">'
+            . '<form id="fgLasHandoff" method="post" action="' . $e($action) . '">'
+            . '<input type="hidden" name="token" value="' . $e($token) . '">'
+            . '<p>' . $e(Text::_('COM_FGLOGINASUSER_HANDOFF_BODY')) . '</p>'
+            . '<button type="submit" style="font:inherit;padding:.5rem 1.2rem">' . $e(Text::_('COM_FGLOGINASUSER_HANDOFF_BUTTON')) . '</button>'
+            . '</form><script src="' . $e($script) . '"></script></body></html>';
+
+        $this->app->close();
     }
 
     private function deny(

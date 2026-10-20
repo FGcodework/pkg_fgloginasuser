@@ -30,7 +30,8 @@ final class Notifier
         string $actor,
         string $target,
         string $client,
-        string $ip
+        string $ip,
+        string $reason = ''
     ): void {
         if (!(int) $params->get('notify_enabled', 0)) {
             return;
@@ -65,7 +66,8 @@ final class Notifier
                     $target,
                     $where,
                     $ip,
-                    Factory::getDate()->format('Y-m-d H:i:s') . ' UTC'
+                    Factory::getDate()->format('Y-m-d H:i:s') . ' UTC',
+                    $reason !== '' ? $reason : '-'
                 )
             );
             $mailer->Send();

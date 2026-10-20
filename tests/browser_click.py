@@ -3,7 +3,7 @@
 Needs the throw-away Joomla from e2e.py at http://127.0.0.1:8080 with the users root / alice / carol.
 Usage: python3 browser_click.py
 """
-import sys
+import subprocess, sys
 from playwright.sync_api import sync_playwright
 
 BASE = 'http://127.0.0.1:8080'
@@ -46,14 +46,33 @@ with sync_playwright() as p:
         open_screen(pg, screen)
         btn = pg.locator('.fg-las-btn[data-client="site"]').first
         check(screen + ': frontend button present', btn.count() == 1)
+        btn.click()
+        pg.wait_for_selector('#fgLasDialog[open]', timeout=5000)
+        check(screen + ': frontend button opens the dialog with the reason field', pg.locator('#fgLasReason').is_visible())
+        check(screen + ': ... showing the frontend wording', 'frontend' in pg.locator('#fgLasDialogTitle').inner_text().lower())
+        pg.fill('#fgLasReason', 'Browser test reason')
         with ctx.expect_page(timeout=15000) as new:
-            btn.click()
+            pg.click('#fgLasDialogOk')
         tab = new.value
         tab.wait_for_load_state()
         tab.wait_for_timeout(1000)
         check(screen + ': frontend tab is the site, not the backend', '/administrator' not in tab.url, tab.url)
+        check(screen + ': ... and the URL carries no token', 'token' not in tab.url, tab.url)
         check(screen + ': frontend tab shows the return bar', tab.locator('#fg-las-bar').count() == 1, tab.url)
+        check(screen + ': ... with the reason and the end time', 'Browser test reason' in tab.locator('#fg-las-bar').inner_text() and 'ends automatically' in tab.locator('#fg-las-bar').inner_text(), tab.locator('#fg-las-bar').inner_text() if tab.locator('#fg-las-bar').count() else '')
         tab.close()
+
+        # required reason: an empty field keeps the dialog open
+        subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_SET(COALESCE(NULLIF(params,''),'{}'),'$.reason_mode',2) where element='com_fgloginasuser' and type='component'"], check=True)
+        open_screen(pg, screen)
+        pg.locator('.fg-las-btn[data-client="site"]').first.click()
+        pg.wait_for_selector('#fgLasDialog[open]', timeout=5000)
+        pg.click('#fgLasDialogOk')
+        pg.wait_for_timeout(500)
+        check(screen + ': required reason keeps the dialog open when empty', pg.locator('#fgLasDialog[open]').count() == 1)
+        pg.click('#fgLasDialogCancel')
+        pg.wait_for_timeout(400)
+        subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_SET(params,'$.reason_mode',1) where element='com_fgloginasuser' and type='component'"], check=True)
 
         # backend button -> same tab becomes the backend of the user
         open_screen(pg, screen)

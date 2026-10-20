@@ -8,6 +8,7 @@
 
 namespace FG\Component\Fgloginasuser\Administrator\Service;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
@@ -82,22 +83,33 @@ final class ButtonRenderer
      */
     public static function form(): string
     {
-        $e = static fn (string $key): string => self::e(Text::_($key));
+        $e    = static fn (string $key): string => self::e(Text::_($key));
+        $mode = Justification::mode(ComponentHelper::getParams('com_fgloginasuser'));
 
         $form = '<form id="fgLasForm" action="' . self::e(Route::_('index.php?option=com_fgloginasuser&task=impersonate.start', false))
             . '" method="post" class="d-none"><input type="hidden" name="id" value="">'
-            . '<input type="hidden" name="client" value="">' . HTMLHelper::_('form.token') . '</form>';
+            . '<input type="hidden" name="client" value=""><input type="hidden" name="reason" value="">' . HTMLHelper::_('form.token') . '</form>';
 
-        // Confirmation for the backend switch (replaces window.confirm). Own element, not nested in any form;
-        // users.js falls back to window.confirm when <dialog> is not supported.
-        $dialog = '<dialog id="fgLasDialog" class="fg-las-dialog" aria-labelledby="fgLasDialogTitle" data-title="' . $e('COM_FGLOGINASUSER_DIALOG_TITLE') . '">'
+        // Confirmation (backend switch) and reason, in one styled dialog. Own element, not nested in any form;
+        // users.js falls back to window.confirm / window.prompt when <dialog> is not supported.
+        $reasonBlock = $mode > 0
+            ? '<label class="fg-las-dialog-label" for="fgLasReason">' . $e($mode === 2 ? 'COM_FGLOGINASUSER_DIALOG_REASON_REQUIRED' : 'COM_FGLOGINASUSER_DIALOG_REASON')
+                . '</label><textarea id="fgLasReason" class="form-control" rows="2" maxlength="' . Justification::MAX . '"'
+                . ($mode === 2 ? ' required' : '') . '></textarea>'
+            : '';
+
+        $dialog = '<dialog id="fgLasDialog" class="fg-las-dialog" aria-labelledby="fgLasDialogTitle" data-reason-mode="' . $mode . '"'
+            . ' data-title-administrator="' . $e('COM_FGLOGINASUSER_DIALOG_TITLE') . '" data-title-site="' . $e('COM_FGLOGINASUSER_DIALOG_TITLE_SITE') . '"'
+            . ' data-ok-administrator="' . $e('COM_FGLOGINASUSER_DIALOG_OK') . '" data-ok-site="' . $e('COM_FGLOGINASUSER_DIALOG_OK_SITE') . '">'
             . '<form method="dialog">'
             . '<div class="fg-las-dialog-head"><span class="icon-cogs fg-las-dialog-icon" aria-hidden="true"></span>'
             . '<h2 id="fgLasDialogTitle" class="fg-las-dialog-title"></h2></div>'
-            . '<p class="fg-las-dialog-body">' . $e('COM_FGLOGINASUSER_DIALOG_BODY') . '</p>'
+            . '<p class="fg-las-dialog-body" data-for="administrator">' . $e('COM_FGLOGINASUSER_DIALOG_BODY') . '</p>'
+            . '<p class="fg-las-dialog-body" data-for="site">' . $e('COM_FGLOGINASUSER_DIALOG_BODY_SITE') . '</p>'
+            . $reasonBlock
             . '<div class="fg-las-dialog-actions">'
-            . '<button type="submit" value="cancel" id="fgLasDialogCancel" class="btn btn-secondary" autofocus>' . $e('JCANCEL') . '</button>'
-            . '<button type="submit" value="ok" id="fgLasDialogOk" class="btn btn-warning">' . $e('COM_FGLOGINASUSER_DIALOG_OK') . '</button>'
+            . '<button type="submit" value="cancel" id="fgLasDialogCancel" class="btn btn-secondary" formnovalidate autofocus>' . $e('JCANCEL') . '</button>'
+            . '<button type="submit" value="ok" id="fgLasDialogOk" class="btn btn-warning"></button>'
             . '</div></form></dialog>';
 
         return $form . $dialog;

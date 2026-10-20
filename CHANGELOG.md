@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0 - 2026-10-20
+
+Feature release (the "later" items of the 1.0.5 review).
+
+- **Reason for the login**: the dialog asks why the administrator logs in as somebody else (new option *Reason for the login*: do not ask / optional / required; optional by default). The reason is saved in the log (new column, added by the update script), the User Actions Log, the notification e-mail and shown in the return bar. A required reason is also enforced on the server.
+- **Maximum duration** (new option, 60 minutes by default, 0 = no limit): an impersonation ends automatically with the first request after the limit, is recorded as ended, and the session is closed. The return bar shows when it ends.
+- **Login token no longer travels in a URL**: the administrator hands it to the site in the body of a POST request (small self-submitting page with an external script, so it works under a strict Content-Security-Policy). The token is therefore not in the browser history, in server or proxy access logs, or in a Referer header. The site no longer accepts the token from the query string.
+- Database: `#__fgloginasuser_logs.reason` (update script `1.1.0.sql`).
+- Tests: `tests/release110.py` covers the three features.
+
 ## 1.0.8 - 2026-10-20
 
 Security and robustness release, based on an external audit of 1.0.5; every fix has a regression test (`tests/audit.py`) that fails on 1.0.7 and passes here.

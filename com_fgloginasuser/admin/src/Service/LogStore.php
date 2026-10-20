@@ -40,7 +40,8 @@ final class LogStore
         string $ip,
         string $note = '',
         ?string $tokenHash = null,
-        ?string $tokenExpires = null
+        ?string $tokenExpires = null,
+        string $reason = ''
     ): int {
         $now = Factory::getDate()->toSql();
 
@@ -53,6 +54,7 @@ final class LogStore
             'status'          => $status,
             'ip'              => substr($ip, 0, 45),
             'note'            => mb_substr($note, 0, 255),
+            'reason'          => mb_substr($reason, 0, 255),
             'token_hash'      => $tokenHash,
             'token_expires'   => $tokenExpires,
             'created'         => $now,

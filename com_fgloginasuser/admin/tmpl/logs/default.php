@@ -65,7 +65,12 @@ $badge = [
                     <tr class="row<?php echo $i % 2; ?>">
                         <td class="text-center"><?php echo HTMLHelper::_('grid.id', $i, $item->id); ?></td>
                         <td class="small text-nowrap"><?php echo HTMLHelper::_('date', $item->created, $dateFmt); ?></td>
-                        <td><?php echo $this->escape($item->actor_username); ?></td>
+                        <td>
+                            <?php echo $this->escape($item->actor_username); ?>
+                            <?php if ((string) $item->reason !== '') : ?>
+                                <div class="small text-muted"><?php echo Text::_('COM_FGLOGINASUSER_COL_REASON'); ?>: <?php echo $this->escape($item->reason); ?></div>
+                            <?php endif; ?>
+                        </td>
                         <td><?php echo $item->target_username !== '' ? $this->escape($item->target_username) : '–'; ?></td>
                         <td><?php echo Text::_($item->client === 'site' ? 'COM_FGLOGINASUSER_CLIENT_SITE' : 'COM_FGLOGINASUSER_CLIENT_ADMIN'); ?></td>
                         <td>

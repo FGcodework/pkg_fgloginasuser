@@ -12,6 +12,7 @@ def conf(key, val):
     s = open(CONF).read()
     s = re.sub(r'public \$%s = [^;]*;' % key, 'public $%s = %s;' % (key, val), s)
     open(CONF, 'w').write(s)
+    time.sleep(3)  # php -S keeps configuration.php in opcache and revalidates every 2 s
 
 
 def consume(b, loc):

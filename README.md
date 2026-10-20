@@ -17,6 +17,8 @@ Package `pkg_fgloginasuser` = component `com_fgloginasuser` + system plugin `plg
 - **Frontend login** - opens the site as the user (new tab by default). The site session is separate from your administrator session, so the administration stays open.
 - **Backend login** - switches your administrator session to another backend user in place (useful for testing what a Manager sees). A bar at the bottom of every page offers *Return to my account*.
 - **Buttons in the core *Users* list** (`com_users`) - the same buttons (compact labels, full text as tooltip), with the same permission and restriction checks, appear in their own *Login as* column after *Username*. Can be switched off in the system plugin options.
+- **Reason for the login** - the dialog asks why you log in as somebody else (do not ask / optional / required, see Options -> Security). Saved in the log, the User Actions Log and the notification e-mail, shown in the return bar.
+- **Maximum duration** - an impersonation ends automatically after the configured minutes (60 by default, 0 = no limit).
 - **Joomla User Actions Log** - started / ended / denied logins are written to *Users -> User Actions Log* (filterable by extension). Disable the action log plugin to stop writing.
 - Users screen with search / group / status filters; unavailable actions are greyed out with the reason in a tooltip.
 - Permissions per Joomla user group (Options -> Permissions): *Login to frontend as user*, *Login to backend as user*. Super Users are always allowed.
@@ -42,7 +44,7 @@ Updates are announced by Joomla itself (*System -> Update -> Extensions*) throug
 | Rule | Detail |
 | --- | --- |
 | CSRF | Starting an impersonation is POST-only with a Joomla form token; stopping needs the session token. |
-| Frontend token | 256 random bits, DB stores only its SHA-256, single use (atomic `UPDATE ... WHERE status='pending'`), default 60 s, optionally bound to the requesting IP, response sent with `Cache-Control: no-store` and `Referrer-Policy: no-referrer`. Permissions are re-evaluated when the token is used. |
+| Frontend token | 256 random bits, DB stores only its SHA-256, single use (atomic `UPDATE ... WHERE status='pending'`), default 60 s, optionally bound to the requesting IP, handed to the site in a POST body (never in a URL), response sent with `Cache-Control: no-store` and `Referrer-Policy: no-referrer`. Permissions are re-evaluated when the token is used. |
 | Targets | Never yourself, never blocked or non-activated users, only users allowed to log in on that client (`core.login.site` / `core.login.admin`). |
 | Super Users | Only another Super User can log in as a Super User, and only when *Allow impersonating Super Users* is on (off by default). |
 | Restrictions | Rows in Options -> Security limit which groups an administrator group may log in as. Super Users are never restricted. A row with no target groups allows nobody. |
@@ -51,7 +53,8 @@ Updates are announced by Joomla itself (*System -> Update -> Extensions*) throug
 
 Things to know:
 
-- The one-time token is part of a URL for a few seconds, so it can appear in the web server access log - it is useless after first use or expiry.
+- The one-time token travels in a POST body from the administrator to the site, so it does not appear in URLs, access logs or Referer headers.
+- After the maximum duration the impersonated session is closed (not handed back to the administrator), who then signs in again.
 - A **backend** switch changes the session of that browser, so other administrator tabs in the same browser are switched as well.
 - If your connection alternates between IPv4 and IPv6 between the administrator and the site request, turn off *Bind login link to IP address*.
 - While impersonating a user in the backend, an impersonated user without access to this component can still leave via the bar (the *stop* task is exempt from `core.manage`, but only while the session carries an impersonation marker).
@@ -63,7 +66,7 @@ Things to know:
 
 ## Tests
 
-`tests/audit.py` (26 checks) holds the regression tests for the findings of the 1.0.5 security review (shared sessions, actor revalidation, group inheritance, forced password reset, logout in an impersonated session, audit-table outage, log permissions, purge); it reuses the helpers of `e2e.py`. `tests/logstore_probe.php <joomla-root> <actorId> <targetId>` checks the token claim / refusal race against the real database. `tests/browser_click.py` additionally clicks the real buttons in Chromium (Playwright). `tests/e2e.py` is the browser-like end-to-end suite used for the release (133 checks: both targets, ACL, restrictions, token replay / expiry / IP mismatch / junk, CSRF, MFA, parallel real sessions, mail, retention, `com_users` list buttons, User Actions Log, PHP warnings). It expects a throw-away Joomla at `http://127.0.0.1:8080` with the users `root`, `alice`, `bob`, `carol` (Manager), `mike` (Manager), `dave` (blocked), `sue` (Super User) - see the top of the script.
+`tests/release110.py` (30 checks) covers the 1.1.0 features (POST hand-over, reason, maximum duration; it waits about a minute for the time limit). `tests/audit.py` (26 checks) holds the regression tests for the findings of the 1.0.5 security review (shared sessions, actor revalidation, group inheritance, forced password reset, logout in an impersonated session, audit-table outage, log permissions, purge); it reuses the helpers of `e2e.py`. `tests/logstore_probe.php <joomla-root> <actorId> <targetId>` checks the token claim / refusal race against the real database. `tests/browser_click.py` additionally clicks the real buttons in Chromium (Playwright). `tests/e2e.py` is the browser-like end-to-end suite used for the release (133 checks: both targets, ACL, restrictions, token replay / expiry / IP mismatch / junk, CSRF, MFA, parallel real sessions, mail, retention, `com_users` list buttons, User Actions Log, PHP warnings). It expects a throw-away Joomla at `http://127.0.0.1:8080` with the users `root`, `alice`, `bob`, `carol` (Manager), `mike` (Manager), `dave` (blocked), `sue` (Super User) - see the top of the script.
 
 ## Repository layout
 
@@ -73,7 +76,7 @@ Things to know:
 | `com_fgloginasuser/` | Component (administrator + site + media) |
 | `plg_system_fgloginasuser/` | System plugin: return bar, buttons and *Login as* column in `com_users` |
 | `plg_actionlog_fgloginasuser/` | Action log plugin: language strings for the User Actions Log |
-| `tests/` | End-to-end suite (`e2e.py`), review regression tests (`audit.py`, `logstore_probe.php`) and real-browser click test (`browser_click.py`) |
+| `tests/` | End-to-end suite (`e2e.py`), review regression and feature tests (`audit.py`, `release110.py`, `logstore_probe.php`) and real-browser click test (`browser_click.py`) |
 | `build.sh` | Builds `dist/pkg_fgloginasuser_vX.X.X.zip` and regenerates `updates.xml` |
 | `updates.xml` | Joomla update server feed (generated) |
 
@@ -97,6 +100,6 @@ Part of the FG extension series by [FGcodework](https://github.com/FGcodework). 
 
 ## Known limitations
 
-- The one-time login link carries a bearer token in the URL (valid 60 s, single use, bound to the IP by default).
-- No absolute time limit on an impersonation, no mandatory reason / ticket field and no step-up authentication; candidates for a later release.
+- The one-time login token is a bearer credential (valid 60 s, single use, bound to the IP by default); whoever holds it within that time can use it.
+- No step-up authentication (password / second factor) before an impersonation starts; a candidate for a later release.
 - Viewing the audit log needs the separate permission `Log` (`fgloginasuser.logs`).
