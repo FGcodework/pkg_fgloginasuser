@@ -8,6 +8,7 @@
 
 namespace FG\Component\Fgloginasuser\Administrator\View\Users;
 
+use FG\Component\Fgloginasuser\Administrator\Service\Environment;
 use FG\Component\Fgloginasuser\Administrator\Service\AccessPolicy;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -33,6 +34,10 @@ class HtmlView extends BaseHtmlView
     public function display($tpl = null)
     {
         $model = $this->getModel();
+
+        if (($warning = Environment::pluginWarning()) !== '') {
+            Factory::getApplication()->enqueueMessage(Text::_($warning), 'warning');
+        }
 
         $this->items         = $model->getItems();
         $this->pagination    = $model->getPagination();

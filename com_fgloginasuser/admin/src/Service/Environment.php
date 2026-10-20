@@ -18,6 +18,14 @@ use Joomla\CMS\Plugin\PluginHelper;
  */
 final class Environment
 {
+    /**
+     * Warning for the administrator when the system plugin is disabled (empty string when all is well).
+     */
+    public static function pluginWarning(): string
+    {
+        return PluginHelper::isEnabled('system', 'fgloginasuser') ? '' : 'COM_FGLOGINASUSER_WARN_PLUGIN_OFF';
+    }
+
     public static function check(CMSApplicationInterface $app): ?string
     {
         // One session shared by site and administrator: the impersonated identity would also become the

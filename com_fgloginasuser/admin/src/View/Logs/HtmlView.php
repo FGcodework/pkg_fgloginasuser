@@ -8,6 +8,7 @@
 
 namespace FG\Component\Fgloginasuser\Administrator\View\Logs;
 
+use FG\Component\Fgloginasuser\Administrator\Service\Environment;
 use FG\Component\Fgloginasuser\Administrator\Service\Justification;
 use FG\Component\Fgloginasuser\Administrator\Service\LogStore;
 use Joomla\CMS\Component\ComponentHelper;
@@ -31,6 +32,10 @@ class HtmlView extends BaseHtmlView
     public function display($tpl = null)
     {
         $model = $this->getModel();
+
+        if (($warning = Environment::pluginWarning()) !== '') {
+            Factory::getApplication()->enqueueMessage(Text::_($warning), 'warning');
+        }
 
         // Retention also runs when the log is looked at, not only when somebody starts a new login.
         (new LogStore(Factory::getContainer()->get(DatabaseInterface::class)))->purgeOlderThan((int) ComponentHelper::getParams('com_fgloginasuser')->get('log_retention_days', 365));

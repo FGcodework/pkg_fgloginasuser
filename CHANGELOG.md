@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.2 - 2026-10-20
+
+- **Dependency on the system plugin made visible**: the Users and Logs screens show a warning when *System - FG Login as User* is disabled (what is lost for running impersonations and what to do). New README section *The system plugin is part of the security*.
+- Tests: `tests/release122.py` (return path without the plugin, package update and audit table outage during a login).
+
 ## 1.2.1 - 2026-10-20
 
 - **Identity confirmation fails closed**: in *Password and second factor code* mode a failure to read the account's second factors (for instance a database error) no longer falls back to the password alone; the login is refused with a clear message and a log entry. Core's own helper hides database errors (it returns an empty list), so the lookup is now our own query. The code now tells apart *has a usable factor*, *has only factors that cannot be asked here*, *has none* and *lookup failed*.
