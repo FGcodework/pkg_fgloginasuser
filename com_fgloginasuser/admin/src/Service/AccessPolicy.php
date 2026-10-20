@@ -27,6 +27,9 @@ final class AccessPolicy
     public const CLIENT_SITE  = 'site';
     public const CLIENT_ADMIN = 'administrator';
 
+    /** Global actions compared by the "no higher rights" rule. */
+    private const COMPARED_ACTIONS = ['core.manage', 'core.create', 'core.edit', 'core.edit.state', 'core.edit.own', 'core.delete'];
+
     public function __construct(private readonly Registry $params)
     {
     }
@@ -105,6 +108,16 @@ final class AccessPolicy
         if ($target->authorise('core.admin')) {
             if (!$actor->authorise('core.admin') || !(int) $this->params->get('allow_superusers', 0)) {
                 return 'COM_FGLOGINASUSER_ERR_SUPERUSER';
+            }
+        }
+
+        // Nobody can hand themselves rights through somebody else's identity: the target may hold none of the global
+        // rights that the actor lacks. Super Users are not restricted. (Per-component rights are not compared.)
+        if (!$actor->authorise('core.admin') && (int) $this->params->get('block_higher', 1)) {
+            foreach (self::COMPARED_ACTIONS as $compared) {
+                if ($target->authorise($compared) && !$actor->authorise($compared)) {
+                    return 'COM_FGLOGINASUSER_ERR_HIGHER';
+                }
             }
         }
 

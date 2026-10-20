@@ -12,10 +12,14 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Installer\InstallerAdapter;
 use Joomla\CMS\Installer\InstallerScriptInterface;
 use Joomla\Database\DatabaseInterface;
+use Joomla\Database\ParameterType;
 
 return new class () implements InstallerScriptInterface {
     /** @var array<string, bool> Companion plugins that were already installed before this run. */
     private array $existed = [];
+
+    /** True when the version installed before this run is older than 1.2.0 (set in preflight). */
+    private bool $updatedFromOlderThan120 = false;
 
     public function install(InstallerAdapter $adapter): bool
     {
@@ -50,6 +54,15 @@ return new class () implements InstallerScriptInterface {
             $this->existed[$folder] = $this->pluginExists($db, $folder);
         }
 
+        $query = $db->createQuery()
+            ->select($db->quoteName('manifest_cache'))
+            ->from($db->quoteName('#__extensions'))
+            ->where($db->quoteName('type') . ' = ' . $db->quote('component'))
+            ->where($db->quoteName('element') . ' = ' . $db->quote('com_fgloginasuser'));
+        $installed = (string) (json_decode((string) $db->setQuery($query)->loadResult(), true)['version'] ?? '');
+
+        $this->updatedFromOlderThan120 = $installed !== '' && version_compare($installed, '1.2.0', '<');
+
         if (!str_contains(strtolower($db->getServerType()), 'mysql')) {
             Factory::getApplication()->enqueueMessage('FG Login as User supports MySQL / MariaDB only.', 'error');
 
@@ -69,6 +82,12 @@ return new class () implements InstallerScriptInterface {
 
         $db = Factory::getContainer()->get(DatabaseInterface::class);
 
+        // 1.2.0 added "no higher rights" (on for new installs). Existing installs keep their behaviour until the
+        // administrator decides: the option is stored as off unless it has been set.
+        if ($type === 'update') {
+            $this->keepOpenBehaviour($db);
+        }
+
         foreach (['system', 'actionlog'] as $folder) {
             if (empty($this->existed[$folder])) {
                 $enabled = 1;
@@ -85,6 +104,39 @@ return new class () implements InstallerScriptInterface {
         }
 
         return true;
+    }
+
+    private function keepOpenBehaviour(DatabaseInterface $db): void
+    {
+        $query = $db->createQuery()
+            ->select([$db->quoteName('extension_id'), $db->quoteName('params')])
+            ->from($db->quoteName('#__extensions'))
+            ->where($db->quoteName('type') . ' = ' . $db->quote('component'))
+            ->where($db->quoteName('element') . ' = ' . $db->quote('com_fgloginasuser'));
+        $row = $db->setQuery($query)->loadObject();
+
+        // Not for an update that merely re-installs a 1.2.x or newer package: the option is known by then.
+        if (!$row || !$this->updatedFromOlderThan120) {
+            return;
+        }
+
+        $params = new \Joomla\Registry\Registry((string) $row->params);
+
+        if ($params->exists('block_higher')) {
+            return;
+        }
+
+        $params->set('block_higher', 0);
+        $json = $params->toString();
+        $id   = (int) $row->extension_id;
+        $upd  = $db->createQuery()
+            ->update($db->quoteName('#__extensions'))
+            ->set($db->quoteName('params') . ' = :params')
+            ->where($db->quoteName('extension_id') . ' = :id')
+            ->bind(':params', $json)
+            ->bind(':id', $id, ParameterType::INTEGER);
+
+        $db->setQuery($upd)->execute();
     }
 
     private function pluginExists(DatabaseInterface $db, string $folder): bool

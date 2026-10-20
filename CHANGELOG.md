@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0 - 2026-10-20
+
+Hardening from a second review.
+
+- **No higher rights** (new option, on for new installs): an administrator who is not a Super User cannot log in as a user who holds a global permission (`core.manage`, create, edit, edit state, edit own, delete) that the administrator lacks. Before, a Manager with the login permission could take over an Administrator. Permissions inside single components are not compared; the group restrictions remain for those.
+- **Updates keep the old behaviour**: when updating from an older version the option is stored as *off* unless it was already set, so existing set-ups do not change until you switch it on (Options -> Security).
+- The Options screen now says plainly that granting the login permission does not limit which users can be logged in as; the permission descriptions say the same; the restrictions description states that rules of several groups are combined (union).
+- Tests: `tests/release120.py`.
+
 ## 1.1.4 - 2026-10-20
 
 - Fix: the title of the Options screen showed the raw key `com_fgloginasuser_configuration`; it is now "FG Login as User: Options" (Slovak: "Možnosti").
