@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1 - 2026-10-20
+
+- **Identity confirmation fails closed**: in *Password and second factor code* mode a failure to read the account's second factors (for instance a database error) no longer falls back to the password alone; the login is refused with a clear message and a log entry. Core's own helper hides database errors (it returns an empty list), so the lookup is now our own query. The code now tells apart *has a usable factor*, *has only factors that cannot be asked here*, *has none* and *lookup failed*.
+- New option *Accounts whose second factor cannot be asked here* (WebAuthn / e-mail only): *Password only* (as before, default) or *Refuse*.
+- Tests: `tests/release121.py`.
+
 ## 1.2.0 - 2026-10-20
 
 Hardening from a second review.

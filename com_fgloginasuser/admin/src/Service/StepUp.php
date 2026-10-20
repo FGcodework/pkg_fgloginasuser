@@ -11,6 +11,9 @@ namespace FG\Component\Fgloginasuser\Administrator\Service;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Event\MultiFactor\Validate;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Log\Log;
+use Joomla\Database\DatabaseInterface;
+use Joomla\Database\ParameterType;
 use Joomla\CMS\User\User;
 use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\CMS\User\UserHelper;
@@ -69,7 +72,7 @@ final class StepUp
      */
     public static function needsCode(CMSApplication $app, Registry $params, User $actor): bool
     {
-        return self::mode($params) === 2 && self::codeRecords($app, $actor) !== [];
+        return self::mode($params) === 2 && self::factors($app, $actor)['state'] === 'code';
     }
 
     /**
@@ -91,6 +94,20 @@ final class StepUp
             }
 
             $fail = ['n' => 0, 'ts' => 0];
+        }
+
+        // Fail closed: when the second factor is required, a failure to find out about it must never fall back to the
+        // password alone, and an account whose factors cannot be asked for here is refused if the administrator chose so.
+        if (self::mode($params) === 2) {
+            $state = self::factors($app, $actor)['state'];
+
+            if ($state === 'error') {
+                return 'COM_FGLOGINASUSER_ERR_STEPUP_MFA_UNAVAILABLE';
+            }
+
+            if ($state === 'unsupported' && (int) $params->get('stepup_unsupported', 0) === 1) {
+                return 'COM_FGLOGINASUSER_ERR_STEPUP_MFA_UNSUPPORTED';
+            }
         }
 
         // Nothing typed (for instance the dialog was opened while the check was still valid): ask, do not count.
@@ -125,21 +142,57 @@ final class StepUp
     }
 
     /**
-     * Active second-factor records of the user that a typed code can be checked against.
+     * What the account has in the way of second factors:
+     *  - code:        at least one method a typed code can be checked against ("records")
+     *  - unsupported: only methods that cannot be asked for here (WebAuthn, e-mail)
+     *  - none:        no active second factor
+     *  - error:       the records could not be read (never to be treated as "none")
      *
-     * @return  \Joomla\Component\Users\Administrator\Table\MfaTable[]
+     * @return  array{state:string, records:array}
      */
-    private static function codeRecords(CMSApplication $app, User $actor): array
+    private static function factors(CMSApplication $app, User $actor): array
     {
         try {
-            $model = $app->bootComponent('com_users')->getMVCFactory()->createModel('Captive', 'Administrator', ['ignore_request' => true]);
+            // Our own query: core's helper swallows database errors and would report "no second factor".
+            $db    = Factory::getContainer()->get(DatabaseInterface::class);
+            $id    = (int) $actor->id;
+            $query = $db->createQuery()
+                ->select($db->quoteName('method'))
+                ->from($db->quoteName('#__user_mfa'))
+                ->where($db->quoteName('user_id') . ' = :id')
+                ->bind(':id', $id, ParameterType::INTEGER);
+            $methods = array_map('strval', $db->setQuery($query)->loadColumn() ?: []);
 
-            return array_values(array_filter(
+            // Only methods whose plugin is active count (core skips the others at login as well); backup codes alone are no factor.
+            $active   = array_map('strval', array_keys(MfaHelper::getMfaMethods()));
+            $relevant = array_values(array_filter($methods, static fn (string $m): bool => $m !== 'backupcodes' && \in_array($m, $active, true)));
+
+            if ($relevant === []) {
+                return ['state' => 'none', 'records' => []];
+            }
+
+            $usable = array_values(array_filter($relevant, static fn (string $m): bool => !\in_array($m, self::UNSUPPORTED, true)));
+
+            if ($usable === []) {
+                return ['state' => 'unsupported', 'records' => []];
+            }
+
+            $model   = $app->bootComponent('com_users')->getMVCFactory()->createModel('Captive', 'Administrator', ['ignore_request' => true]);
+            $records = array_values(array_filter(
                 $model->getRecords($actor, false),
                 static fn ($record): bool => !\in_array($record->method, self::UNSUPPORTED, true)
             ));
-        } catch (\Throwable) {
-            return [];
+
+            // The rows exist but could not be loaded: that is an error, not "no factor".
+            if ($records === []) {
+                throw new \RuntimeException('Second factor records could not be loaded');
+            }
+
+            return ['state' => 'code', 'records' => $records];
+        } catch (\Throwable $e) {
+            Log::add('Second factor lookup failed: ' . $e->getMessage(), Log::WARNING, 'com_fgloginasuser');
+
+            return ['state' => 'error', 'records' => []];
         }
     }
 
@@ -147,7 +200,7 @@ final class StepUp
     {
         $model = $app->bootComponent('com_users')->getMVCFactory()->createModel('Captive', 'Administrator', ['ignore_request' => true]);
 
-        foreach (self::codeRecords($app, $actor) as $record) {
+        foreach (self::factors($app, $actor)['records'] as $record) {
             // Core's own try limit per method (counts every attempt, resets on success).
             if (!$model->checkTryLimit($record)) {
                 continue;
