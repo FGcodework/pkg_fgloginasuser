@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.6 - 2026-10-20
+
+- **Failure of the Users list buttons is no longer silent**: the buttons are inserted into the rendered core list (Joomla has no event for it). When the expected markup is missing (table body, rows, username cell or username column header) the page is left untouched, as before, and a warning with the reason and the Joomla version is now written to `com_fgloginasuser.log.php` in the Joomla log folder, at most once per administrator session. Nothing is shown to visitors. An empty list (no table) is not reported.
+- Tests: `tests/release126.py` simulates changed core markup with a template override (row class, column header) and checks the page, the one-time log entry and the empty-list case. `tests/e2e.py` keeps checking the buttons on the real list, so running the suite on a new Joomla version is the compatibility check.
+
 ## 1.2.5 - 2026-10-20
 
 - **Returning to the original administrator re-checks the account like the start does**: ending a backend impersonation verified only that the account exists, is not blocked and may log in to the backend, but not that it is activated, which the start checks. An account deactivated (activation not cleared) during an impersonation, without being blocked, could be restored into the session (reproduced). The check is now one method, `AccessPolicy::canRestore()`: account exists, not blocked, activated, `core.login.admin`. It deliberately does not require rights to this tool, so leaving a foreign identity always stays possible; if the account may not be restored the session simply ends.

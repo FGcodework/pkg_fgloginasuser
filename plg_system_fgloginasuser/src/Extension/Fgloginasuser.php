@@ -15,6 +15,7 @@ use FG\Component\Fgloginasuser\Administrator\Service\SessionSwitcher;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Log\Log;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
@@ -145,6 +146,35 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
         return $user && !$user->guest && $user->authorise('core.manage', 'com_fgloginasuser');
     }
 
+    /**
+     * The buttons could not be inserted into the core user list (its markup probably changed).
+     * Written to the log file (category com_fgloginasuser), at most once per session; nothing is shown to the visitor.
+     */
+    private function diagnose(string $reason): void
+    {
+        $app = $this->getApplication();
+
+        try {
+            $session = $app->getSession();
+
+            if ($session->get('fgloginasuser.listwarned')) {
+                return;
+            }
+
+            $session->set('fgloginasuser.listwarned', 1);
+
+            Log::addLogger(['text_file' => 'com_fgloginasuser.log.php'], Log::WARNING, ['com_fgloginasuser']);
+            Log::add(
+                'Login-as buttons were not added to the Users list: ' . $reason . '. Joomla ' . JVERSION
+                . ', FG Login as User plugin. The extension\'s own Users screen still works.',
+                Log::WARNING,
+                'com_fgloginasuser'
+            );
+        } catch (\Throwable $e) {
+            // Diagnostics must never break the page.
+        }
+    }
+
     private function injectUsersListButtons(): void
     {
         $app  = $this->getApplication();
@@ -154,7 +184,14 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
         $start = $table === false ? false : strpos($body, '<tbody', $table);
         $end   = $start === false ? false : strpos($body, '</tbody>', $start);
 
+        if ($table === false) {
+            // No table at all: an empty list (nothing matched the filter) is normal, nothing to report.
+            return;
+        }
+
         if ($end === false) {
+            $this->diagnose('the <tbody> of the user list was not found');
+
             return;
         }
 
@@ -165,14 +202,16 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
         $factory = Factory::getContainer()->get(UserFactoryInterface::class);
         $actor   = $app->getIdentity();
         $added   = 0;
+        $rows    = 0;
 
         $tbody  = substr($body, $start, $end - $start);
         $failed = false;
 
         $tbody = preg_replace_callback(
             '~<tr class="row\d+">.*?</tr>~s',
-            function (array $match) use ($policy, $factory, $actor, $params, &$added, &$failed): string {
+            function (array $match) use ($policy, $factory, $actor, $params, &$rows, &$added, &$failed): string {
                 $row = $match[0];
+                ++$rows;
 
                 // The new cell goes right after the Username cell (row header cell, then the next cell).
                 if (!preg_match('~</th>\s*<td\b[^>]*>.*?</td>~s', $row, $anchor, PREG_OFFSET_CAPTURE)) {
@@ -216,7 +255,31 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
         // The header cell, after the Username column header; all or nothing so the columns never get out of line.
         $head = substr($body, $table, $start - $table);
 
-        if ($tbody === null || $failed || $added === 0 || !preg_match('~data-order="a\.username".*?</th>~s', $head, $hm, PREG_OFFSET_CAPTURE)) {
+        if ($tbody === null) {
+            $this->diagnose('processing the rows of the user list failed');
+
+            return;
+        }
+
+        if ($rows === 0 && str_contains(substr($body, $start, $end - $start), '<tr')) {
+            $this->diagnose('no row of the user list matched the expected markup (<tr class="rowN">)');
+
+            return;
+        }
+
+        if ($failed) {
+            $this->diagnose('a row of the user list has no username cell after its header cell');
+
+            return;
+        }
+
+        if ($added === 0) {
+            return;
+        }
+
+        if (!preg_match('~data-order="a\.username".*?</th>~s', $head, $hm, PREG_OFFSET_CAPTURE)) {
+            $this->diagnose('the Username column header (data-order="a.username") was not found');
+
             return;
         }
 
