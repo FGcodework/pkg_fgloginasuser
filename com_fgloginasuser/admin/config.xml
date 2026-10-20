@@ -76,6 +76,16 @@
 			filter="integer"
 		/>
 		<field
+			name="max_pending"
+			type="number"
+			label="COM_FGLOGINASUSER_CONFIG_MAXPENDING_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_MAXPENDING_DESC"
+			default="10"
+			min="1"
+			max="100"
+			filter="integer"
+		/>
+		<field
 			name="bind_ip"
 			type="radio"
 			layout="joomla.form.field.radio.switcher"

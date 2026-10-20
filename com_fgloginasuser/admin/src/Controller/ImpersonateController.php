@@ -104,6 +104,16 @@ class ImpersonateController extends BaseController
         $log->purgeOlderThan((int) $params->get('log_retention_days', 365));
 
         if ($client === AccessPolicy::CLIENT_SITE) {
+            $maxPending = max(1, min(100, (int) $params->get('max_pending', 10)));
+
+            if ($log->countPending((int) $actor->id) >= $maxPending) {
+                $this->deny($log, $actor, $target, $targetId, $client, $ip, 'COM_FGLOGINASUSER_ERR_TOO_MANY');
+
+                return;
+            }
+        }
+
+        if ($client === AccessPolicy::CLIENT_SITE) {
             $ttl     = max(10, min(600, (int) $params->get('token_ttl', 60)));
             $token   = bin2hex(random_bytes(32));
             $expires = Factory::getDate('+' . $ttl . ' seconds')->toSql();

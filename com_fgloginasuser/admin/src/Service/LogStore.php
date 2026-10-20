@@ -67,6 +67,26 @@ final class LogStore
     }
 
     /**
+     * Number of unused, unexpired login tokens of one administrator.
+     */
+    public function countPending(int $actorId): int
+    {
+        $now     = Factory::getDate()->toSql();
+        $pending = self::STATUS_PENDING;
+        $query   = $this->db->createQuery()
+            ->select('COUNT(*)')
+            ->from($this->db->quoteName(self::TABLE))
+            ->where($this->db->quoteName('actor_id') . ' = :actor')
+            ->where($this->db->quoteName('status') . ' = :pending')
+            ->where($this->db->quoteName('token_expires') . ' > :now')
+            ->bind(':actor', $actorId, \Joomla\Database\ParameterType::INTEGER)
+            ->bind(':pending', $pending)
+            ->bind(':now', $now);
+
+        return (int) $this->db->setQuery($query)->loadResult();
+    }
+
+    /**
      * Find a pending, unexpired token row.
      */
     public function findPending(string $tokenHash): ?object
