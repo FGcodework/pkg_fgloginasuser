@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form>
+	<fields name="filter">
+		<field
+			name="search"
+			type="text"
+			inputmode="search"
+			label="COM_FGLOGINASUSER_FILTER_SEARCH"
+			hint="JSEARCH_FILTER"
+		/>
+		<field
+			name="state"
+			type="list"
+			label="JSTATUS"
+			class="js-select-submit-on-change"
+			>
+			<option value="">COM_FGLOGINASUSER_FILTER_STATE</option>
+			<option value="0">COM_FGLOGINASUSER_STATE_ENABLED</option>
+			<option value="1">COM_FGLOGINASUSER_STATE_BLOCKED</option>
+		</field>
+		<field
+			name="group_id"
+			type="usergrouplist"
+			label="COM_FGLOGINASUSER_FILTER_GROUP"
+			class="js-select-submit-on-change"
+			>
+			<option value="">COM_FGLOGINASUSER_FILTER_GROUP</option>
+		</field>
+	</fields>
+	<fields name="list">
+		<field
+			name="fullordering"
+			type="list"
+			label="JGLOBAL_SORT_BY"
+			class="js-select-submit-on-change"
+			default="a.name ASC"
+			validate="options"
+			>
+			<option value="">JGLOBAL_SORT_BY</option>
+			<option value="a.name ASC">COM_FGLOGINASUSER_SORT_NAME_ASC</option>
+			<option value="a.name DESC">COM_FGLOGINASUSER_SORT_NAME_DESC</option>
+			<option value="a.username ASC">COM_FGLOGINASUSER_SORT_USERNAME_ASC</option>
+			<option value="a.username DESC">COM_FGLOGINASUSER_SORT_USERNAME_DESC</option>
+			<option value="a.lastvisitDate ASC">COM_FGLOGINASUSER_SORT_LASTVISIT_ASC</option>
+			<option value="a.lastvisitDate DESC">COM_FGLOGINASUSER_SORT_LASTVISIT_DESC</option>
+			<option value="a.id ASC">JGRID_HEADING_ID_ASC</option>
+			<option value="a.id DESC">JGRID_HEADING_ID_DESC</option>
+		</field>
+		<field
+			name="limit"
+			type="limitbox"
+			label="JGLOBAL_LIST_LIMIT"
+			default="20"
+			class="js-select-submit-on-change"
+		/>
+	</fields>
+</form>

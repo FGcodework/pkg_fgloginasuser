@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="plugin" group="system" method="upgrade">
+	<name>PLG_SYSTEM_FGLOGINASUSER</name>
+	<author>Fero</author>
+	<creationDate>2026-10</creationDate>
+	<copyright>(C) 2026 Fero</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE</license>
+	<authorUrl>https://github.com/FGcodework/pkg_fgloginasuser</authorUrl>
+	<version>1.0.6</version>
+	<description>PLG_SYSTEM_FGLOGINASUSER_XML_DESCRIPTION</description>
+	<namespace path="src">FG\Plugin\System\Fgloginasuser</namespace>
+	<files>
+		<folder>services</folder>
+		<folder plugin="fgloginasuser">src</folder>
+	</files>
+	<config>
+		<inlinehelp button="show" />
+		<fields name="params">
+			<fieldset name="basic">
+				<field name="support_note" type="note" description="PLG_SYSTEM_FGLOGINASUSER_SUPPORT_NOTE" />
+			</fieldset>
+			<fieldset name="settings" label="PLG_SYSTEM_FGLOGINASUSER_SETTINGS">
+				<field
+					name="show_in_users_list"
+					type="radio"
+					layout="joomla.form.field.radio.switcher"
+					label="PLG_SYSTEM_FGLOGINASUSER_USERS_LIST_LABEL"
+					description="PLG_SYSTEM_FGLOGINASUSER_USERS_LIST_DESC"
+					default="1"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+			</fieldset>
+		</fields>
+	</config>
+	<languages>
+		<language tag="en-GB">language/en-GB/plg_system_fgloginasuser.ini</language>
+		<language tag="en-GB">language/en-GB/plg_system_fgloginasuser.sys.ini</language>
+		<language tag="sk-SK">language/sk-SK/plg_system_fgloginasuser.ini</language>
+		<language tag="sk-SK">language/sk-SK/plg_system_fgloginasuser.sys.ini</language>
+	</languages>
+</extension>

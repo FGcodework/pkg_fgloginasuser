@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="package" method="upgrade">
+	<name>PKG_FGLOGINASUSER</name>
+	<packagename>fgloginasuser</packagename>
+	<author>Fero</author>
+	<creationDate>2026-10</creationDate>
+	<copyright>(C) 2026 Fero</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE</license>
+	<authorUrl>https://github.com/FGcodework/pkg_fgloginasuser</authorUrl>
+	<version>1.0.6</version>
+	<description>PKG_FGLOGINASUSER_XML_DESCRIPTION</description>
+	<php_minimum>8.3.0</php_minimum>
+	<scriptfile>script.php</scriptfile>
+	<files folder="packages">
+		<file type="component" id="com_fgloginasuser">com_fgloginasuser.zip</file>
+		<file type="plugin" id="fgloginasuser" group="system">plg_system_fgloginasuser.zip</file>
+		<file type="plugin" id="fgloginasuser" group="actionlog">plg_actionlog_fgloginasuser.zip</file>
+	</files>
+	<languages folder="language">
+		<language tag="en-GB">en-GB/pkg_fgloginasuser.sys.ini</language>
+		<language tag="sk-SK">sk-SK/pkg_fgloginasuser.sys.ini</language>
+	</languages>
+	<updateservers>
+		<server type="extension" priority="1" name="FG Login as User">https://raw.githubusercontent.com/FGcodework/pkg_fgloginasuser/main/updates.xml</server>
+	</updateservers>
+</extension>

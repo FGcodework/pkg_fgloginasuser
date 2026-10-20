@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="plugin" group="actionlog" method="upgrade">
+	<name>PLG_ACTIONLOG_FGLOGINASUSER</name>
+	<author>Fero</author>
+	<creationDate>2026-10</creationDate>
+	<copyright>(C) 2026 Fero</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE</license>
+	<authorUrl>https://github.com/FGcodework/pkg_fgloginasuser</authorUrl>
+	<version>1.0.6</version>
+	<description>PLG_ACTIONLOG_FGLOGINASUSER_XML_DESCRIPTION</description>
+	<namespace path="src">FG\Plugin\Actionlog\Fgloginasuser</namespace>
+	<files>
+		<folder>services</folder>
+		<folder plugin="fgloginasuser">src</folder>
+	</files>
+	<languages>
+		<language tag="en-GB">language/en-GB/plg_actionlog_fgloginasuser.ini</language>
+		<language tag="en-GB">language/en-GB/plg_actionlog_fgloginasuser.sys.ini</language>
+		<language tag="sk-SK">language/sk-SK/plg_actionlog_fgloginasuser.ini</language>
+		<language tag="sk-SK">language/sk-SK/plg_actionlog_fgloginasuser.sys.ini</language>
+	</languages>
+</extension>

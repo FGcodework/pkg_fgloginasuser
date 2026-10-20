@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="component" method="upgrade">
+	<name>COM_FGLOGINASUSER</name>
+	<author>Fero</author>
+	<creationDate>2026-10</creationDate>
+	<copyright>(C) 2026 Fero</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE</license>
+	<authorUrl>https://github.com/FGcodework/pkg_fgloginasuser</authorUrl>
+	<version>1.0.6</version>
+	<description>COM_FGLOGINASUSER_XML_DESCRIPTION</description>
+	<namespace path="src">FG\Component\Fgloginasuser</namespace>
+
+	<install>
+		<sql>
+			<file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+		</sql>
+	</install>
+	<uninstall>
+		<sql>
+			<file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+		</sql>
+	</uninstall>
+	<update>
+		<schemas>
+			<schemapath type="mysql">sql/updates/mysql</schemapath>
+		</schemas>
+	</update>
+
+	<files folder="site">
+		<folder>src</folder>
+	</files>
+	<languages folder="site">
+		<language tag="en-GB">language/en-GB/com_fgloginasuser.ini</language>
+		<language tag="sk-SK">language/sk-SK/com_fgloginasuser.ini</language>
+	</languages>
+
+	<media destination="com_fgloginasuser" folder="media">
+		<folder>css</folder>
+		<folder>js</folder>
+	</media>
+
+	<administration>
+		<menu img="class:users">COM_FGLOGINASUSER</menu>
+		<submenu>
+			<menu link="option=com_fgloginasuser&amp;view=users">COM_FGLOGINASUSER_SUBMENU_USERS</menu>
+			<menu link="option=com_fgloginasuser&amp;view=logs">COM_FGLOGINASUSER_SUBMENU_LOGS</menu>
+		</submenu>
+		<files folder="admin">
+			<filename>access.xml</filename>
+			<filename>config.xml</filename>
+			<folder>forms</folder>
+			<folder>services</folder>
+			<folder>sql</folder>
+			<folder>src</folder>
+			<folder>tmpl</folder>
+		</files>
+		<languages folder="admin">
+			<language tag="en-GB">language/en-GB/com_fgloginasuser.ini</language>
+			<language tag="en-GB">language/en-GB/com_fgloginasuser.sys.ini</language>
+			<language tag="sk-SK">language/sk-SK/com_fgloginasuser.ini</language>
+			<language tag="sk-SK">language/sk-SK/com_fgloginasuser.sys.ini</language>
+		</languages>
+	</administration>
+</extension>

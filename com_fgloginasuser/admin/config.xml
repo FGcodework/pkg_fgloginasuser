@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+	<inlinehelp button="show" />
+
+	<fieldset name="general" label="COM_FGLOGINASUSER_CONFIG_GENERAL" description="COM_FGLOGINASUSER_CONFIG_GENERAL_DESC">
+		<field
+			name="button_text_site"
+			type="text"
+			label="COM_FGLOGINASUSER_CONFIG_BTN_SITE_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_BTN_SITE_DESC"
+			hint="COM_FGLOGINASUSER_BTN_SITE"
+		/>
+		<field
+			name="button_text_admin"
+			type="text"
+			label="COM_FGLOGINASUSER_CONFIG_BTN_ADMIN_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_BTN_ADMIN_DESC"
+			hint="COM_FGLOGINASUSER_BTN_ADMIN"
+		/>
+		<field
+			name="site_new_tab"
+			type="radio"
+			layout="joomla.form.field.radio.switcher"
+			label="COM_FGLOGINASUSER_CONFIG_NEWTAB_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_NEWTAB_DESC"
+			default="1"
+			filter="integer"
+			>
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+		<field
+			name="site_redirect_menuitem"
+			type="menuitem"
+			label="COM_FGLOGINASUSER_CONFIG_SITE_MENUITEM_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_SITE_MENUITEM_DESC"
+			default=""
+			>
+			<option value="">JNONE</option>
+		</field>
+		<field
+			name="site_redirect_url"
+			type="text"
+			label="COM_FGLOGINASUSER_CONFIG_SITE_URL_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_SITE_URL_DESC"
+			hint="index.php"
+		/>
+		<field
+			name="admin_redirect_url"
+			type="text"
+			label="COM_FGLOGINASUSER_CONFIG_ADMIN_URL_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_ADMIN_URL_DESC"
+			hint="index.php"
+		/>
+		<field
+			name="custom_css"
+			type="textarea"
+			label="COM_FGLOGINASUSER_CONFIG_CSS_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_CSS_DESC"
+			rows="5"
+			cols="60"
+			filter="raw"
+		/>
+	</fieldset>
+
+	<fieldset name="security" label="COM_FGLOGINASUSER_CONFIG_SECURITY" description="COM_FGLOGINASUSER_CONFIG_SECURITY_DESC">
+		<field
+			name="token_ttl"
+			type="number"
+			label="COM_FGLOGINASUSER_CONFIG_TTL_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_TTL_DESC"
+			default="60"
+			min="10"
+			max="600"
+			step="5"
+			filter="integer"
+		/>
+		<field
+			name="bind_ip"
+			type="radio"
+			layout="joomla.form.field.radio.switcher"
+			label="COM_FGLOGINASUSER_CONFIG_BINDIP_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_BINDIP_DESC"
+			default="1"
+			filter="integer"
+			>
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+		<field
+			name="allow_superusers"
+			type="radio"
+			layout="joomla.form.field.radio.switcher"
+			label="COM_FGLOGINASUSER_CONFIG_SUPERUSERS_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_SUPERUSERS_DESC"
+			default="0"
+			filter="integer"
+			>
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+		<field
+			name="restrictions"
+			type="subform"
+			label="COM_FGLOGINASUSER_CONFIG_RESTRICTIONS_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_RESTRICTIONS_DESC"
+			multiple="true"
+			min="0"
+			buttons="add,remove"
+			layout="joomla.form.field.subform.repeatable-table"
+			>
+			<form>
+				<field
+					name="actor_group"
+					type="usergrouplist"
+					label="COM_FGLOGINASUSER_CONFIG_RESTR_ACTOR"
+					required="true"
+				/>
+				<field
+					name="target_groups"
+					type="usergrouplist"
+					label="COM_FGLOGINASUSER_CONFIG_RESTR_TARGETS"
+					multiple="true"
+				/>
+			</form>
+		</field>
+	</fieldset>
+
+	<fieldset name="logging" label="COM_FGLOGINASUSER_CONFIG_LOGGING" description="COM_FGLOGINASUSER_CONFIG_LOGGING_DESC">
+		<field
+			name="log_retention_days"
+			type="number"
+			label="COM_FGLOGINASUSER_CONFIG_RETENTION_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_RETENTION_DESC"
+			default="365"
+			min="0"
+			max="3650"
+			filter="integer"
+		/>
+		<field
+			name="notify_enabled"
+			type="radio"
+			layout="joomla.form.field.radio.switcher"
+			label="COM_FGLOGINASUSER_CONFIG_NOTIFY_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_NOTIFY_DESC"
+			default="0"
+			filter="integer"
+			>
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+		<field
+			name="notify_email"
+			type="email"
+			label="COM_FGLOGINASUSER_CONFIG_NOTIFY_EMAIL_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_NOTIFY_EMAIL_DESC"
+			validate="email"
+			showon="notify_enabled:1"
+		/>
+	</fieldset>
+
+	<fieldset name="permissions" label="JCONFIG_PERMISSIONS_LABEL" description="JCONFIG_PERMISSIONS_DESC">
+		<field
+			name="rules"
+			type="rules"
+			label="JCONFIG_PERMISSIONS_LABEL"
+			validate="rules"
+			filter="rules"
+			component="com_fgloginasuser"
+			section="component"
+		/>
+	</fieldset>
+</config>

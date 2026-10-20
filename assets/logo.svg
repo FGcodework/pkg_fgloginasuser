@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22345c"/>
+      <stop offset="1" stop-color="#0b1429"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="coral" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff8f7d"/>
+      <stop offset="1" stop-color="#ee4f43"/>
+    </linearGradient>
+    <linearGradient id="slate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b7c6e3"/>
+      <stop offset="1" stop-color="#6d82ad"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd24d"/>
+      <stop offset="1" stop-color="#f2a100"/>
+    </linearGradient>
+    <clipPath id="tile"><rect width="512" height="512" rx="95"/></clipPath>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="9" stdDeviation="8" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="95" fill="url(#bg)"/>
+  <g clip-path="url(#tile)">
+    <ellipse cx="256" cy="-120" rx="420" ry="300" fill="url(#gloss)"/>
+    <rect x="1.5" y="1.5" width="509" height="509" rx="93.5" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="3"/>
+  </g>
+  <!-- the user you log in as (behind) -->
+  <g filter="url(#shadow)">
+    <circle cx="190" cy="168" r="50" fill="url(#slate)"/>
+    <path d="M92 330 C92 262 138 232 190 232 C242 232 288 262 288 330 L288 342 L92 342 Z" fill="url(#slate)"/>
+  </g>
+  <!-- you (front) -->
+  <g filter="url(#shadow)">
+    <circle cx="316" cy="196" r="58" fill="url(#coral)"/>
+    <path d="M196 388 C196 312 252 272 316 272 C380 272 436 312 436 388 L436 402 L196 402 Z" fill="url(#coral)"/>
+  </g>
+  <!-- switch badge -->
+  <g filter="url(#shadow)">
+    <circle cx="150" cy="384" r="52" fill="url(#amber)"/>
+    <g fill="none" stroke="#1b2540" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M124 372 H172 M156 354 L174 372 L156 390"/>
+    </g>
+  </g>
+</svg>
