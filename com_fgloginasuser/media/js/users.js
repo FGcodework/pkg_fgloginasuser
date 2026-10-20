@@ -13,7 +13,10 @@
     return;
   }
 
-  const canDialog = dialog && typeof dialog.showModal === 'function';
+  // Browsers without <dialog>.showModal get the very same dialog (reason list, note, identity fields),
+  // opened as a fixed overlay by the code below, so the options never differ from the native dialog.
+  const native = !!dialog && typeof dialog.showModal === 'function';
+  const canDialog = !!dialog;
   const reasonMode = dialog ? parseInt(dialog.dataset.reasonMode || '0', 10) : 0;
   const reasonField = document.getElementById('fgLasReason');
   const reasonSelect = document.getElementById('fgLasReasonSelect');
@@ -58,6 +61,50 @@
 
   if (reasonSelect) {
     reasonSelect.addEventListener('change', syncReason);
+  }
+
+  const openDialog = () => {
+    if (native) {
+      dialog.showModal();
+
+      return;
+    }
+
+    dialog.classList.add('fg-las-dialog-fallback');
+    dialog.setAttribute('open', '');
+    const first = dialog.querySelector('select, textarea, input, button');
+
+    if (first) {
+      first.focus();
+    }
+  };
+
+  if (dialog && !native) {
+    const closeFallback = (value) => {
+      dialog.returnValue = value;
+      dialog.removeAttribute('open');
+      dialog.dispatchEvent(new Event('close'));
+    };
+
+    dialog.querySelector('form').addEventListener('submit', (event) => event.preventDefault());
+    dialog.querySelectorAll('button[type="submit"]').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+
+        if (btn.value === 'ok' && !btn.form.checkValidity()) {
+          btn.form.reportValidity();
+
+          return;
+        }
+
+        closeFallback(btn.value);
+      });
+    });
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeFallback('cancel');
+      }
+    });
   }
 
   document.addEventListener('click', (event) => {
@@ -123,12 +170,12 @@
           start(currentReason());
         }
       }, { once: true });
-      dialog.showModal();
+      openDialog();
 
       return;
     }
 
-    // Old browsers without <dialog>.
+    // Last resort, only if the dialog markup is missing altogether.
     if (confirmText && !window.confirm(confirmText)) {
       return;
     }

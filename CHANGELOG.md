@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.7 - 2026-10-20
+
+- **Same dialog in browsers without `<dialog>` support**: the fallback used `window.prompt`, which cannot offer the list of predefined reasons or the identity confirmation fields, so with "predefined reasons only" and/or the confirmation turned on a login could not be started there (measured: the dialog never opened). The page now shows the very same dialog (reason list, note, password / code) as a fixed overlay, with Cancel, Escape and the validation of required fields; `window.prompt` remains only if the dialog markup is missing altogether. The server-side validation is unchanged.
+- Tests: `tests/browser_fallback.py` removes `showModal` in a real Chromium and runs the "presets only + required reason + confirmation" configuration; `tests/browser_click.py` still covers the native dialog.
+
 ## 1.2.6 - 2026-10-20
 
 - **Failure of the Users list buttons is no longer silent**: the buttons are inserted into the rendered core list (Joomla has no event for it). When the expected markup is missing (table body, rows, username cell or username column header) the page is left untouched, as before, and a warning with the reason and the Joomla version is now written to `com_fgloginasuser.log.php` in the Joomla log folder, at most once per administrator session. Nothing is shown to visitors. An empty list (no table) is not reported.

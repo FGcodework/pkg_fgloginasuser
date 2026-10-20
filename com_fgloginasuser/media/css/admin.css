@@ -25,6 +25,22 @@
   box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.35);
 }
 
+.fg-las-dialog:not([open]) {
+  display: none;
+}
+
+/* Browsers without <dialog>.showModal: the same dialog as a fixed overlay. */
+.fg-las-dialog-fallback[open] {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  height: fit-content;
+  max-height: calc(100vh - 2rem);
+  margin: auto;
+  overflow: auto;
+  box-shadow: 0 0 0 100vmax rgba(10, 20, 35, 0.55);
+}
+
 .fg-las-dialog::backdrop {
   background: rgba(10, 20, 35, 0.55);
 }
