@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/FGcodework/pkg_fgloginasuser/releases/latest"><img src="https://img.shields.io/github/v/tag/FGcodework/pkg_fgloginasuser?label=version&color=ff6b4a" alt="Version"></a>
   <img src="https://img.shields.io/badge/Joomla-5%20%7C%206-1c3d5a?logo=joomla&logoColor=white" alt="Joomla 5/6">
-  <img src="https://img.shields.io/badge/PHP-8.3+-777bb4?logo=php&logoColor=white&color=purple" alt="PHP 8.1+">
+  <img src="https://img.shields.io/badge/PHP-8.3+-777bb4?logo=php&logoColor=white&color=purple" alt="PHP 8.3+">
   <a href="https://github.com/FGcodework/pkg_fgloginasuser/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-GPL--2.0+-green" alt="License"></a>
   <img src="https://img.shields.io/github/downloads/FGcodework/pkg_fgloginasuser/total?color=brown" alt="Downloads">
   <a href="https://ko-fi.com/FGcodework"><img src="https://img.shields.io/badge/support-Ko--fi-F16061.svg?logo=ko-fi&logoColor=white" alt="Support on Ko-fi"></a>
