@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/logo.png" alt="FG Login as User" width="128"></p>
+<p align="center"><img src="assets/logo.webp" alt="FG Login as User" width="128"></p>
 
 # FG Login as User (pkg_fgloginasuser)
 
