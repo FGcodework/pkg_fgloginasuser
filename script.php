@@ -42,8 +42,8 @@ return new class () implements InstallerScriptInterface {
             return true;
         }
 
-        if (version_compare(JVERSION, '6.0.0', '<')) {
-            Factory::getApplication()->enqueueMessage('FG Login as User requires Joomla 6 or newer.', 'error');
+        if (version_compare(JVERSION, '5.4.0', '<')) {
+            Factory::getApplication()->enqueueMessage('FG Login as User requires Joomla 5.4 or newer.', 'error');
 
             return false;
         }

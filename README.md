@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)](LICENSE)
 [![Ko-fi](https://img.shields.io/badge/support-Ko--fi-ff5e5b)](https://ko-fi.com/fgcodework)
 
-Native **Joomla 6** extension for administrators, part of the FG extension series: log in as another user to check what they see, reproduce a problem, or test permissions - to the **frontend** or to the **backend**.
+Native **Joomla 5.4+ / 6** extension for administrators, part of the FG extension series: log in as another user to check what they see, reproduce a problem, or test permissions - to the **frontend** or to the **backend**.
 
 Package `pkg_fgloginasuser` = component `com_fgloginasuser` + system plugin `plg_system_fgloginasuser` (return bar and buttons in the core Users list) + action log plugin `plg_actionlog_fgloginasuser` (Joomla *User Actions Log* integration).
 
@@ -33,7 +33,7 @@ Package `pkg_fgloginasuser` = component `com_fgloginasuser` + system plugin `plg
 
 ## Requirements
 
-Joomla 6.0+, PHP 8.3+, MySQL / MariaDB. Developed and tested on Joomla 6.1.2.
+Joomla 5.4+ or 6.x, PHP 8.3+, MySQL / MariaDB. Developed on Joomla 6.1.2; the whole test suite (`tests/`) is also run against Joomla 5.4.5. Joomla 5 only receives security fixes until 12 October 2027, so Joomla 6 is the primary target.
 
 ## Installation
 
@@ -104,7 +104,7 @@ GNU General Public License version 2 or later - see [LICENSE](LICENSE).
 
 ## About
 
-Part of the FG extension series by [FGcodework](https://github.com/FGcodework). Inspired by the idea of the Web357 *Login as User* component; this is an independent implementation written for Joomla 6 and works on the backend as well.
+Part of the FG extension series by [FGcodework](https://github.com/FGcodework). Inspired by the idea of the Web357 *Login as User* component; this is an independent implementation written for Joomla 6 (also runs on Joomla 5.4+) and works on the backend as well.
 
 ## Known limitations
 

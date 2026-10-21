@@ -48,7 +48,7 @@ cat > updates.xml <<XML
         </tags>
         <maintainer>Fero</maintainer>
         <maintainerurl>https://github.com/FGcodework</maintainerurl>
-        <targetplatform name="joomla" version="6\.[0-9]+"/>
+        <targetplatform name="joomla" version="(5\.[4-9]|6\.[0-9]+)"/>
         <php_minimum>8.3</php_minimum>
     </update>
 </updates>
