@@ -1,11 +1,11 @@
 <p align="center"><img src="assets/logo.webp" alt="FG Login as User" width="128"></p>
 
-# FG Login as User (pkg_fgloginasuser)
+# FG Login as User
 
 [![Release](https://img.shields.io/github/v/release/FGcodework/pkg_fgloginasuser?label=release)](https://github.com/FGcodework/pkg_fgloginasuser/releases/latest)
-[![Joomla](https://img.shields.io/badge/Joomla-6.x-1c3d5a)](https://www.joomla.org)
+[![Joomla](https://img.shields.io/badge/Joomla-5.4+/6.x-1c3d5a)](https://www.joomla.org)
 [![PHP](https://img.shields.io/badge/PHP-8.3%2B-777bb4)](https://www.php.net)
-[![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)](LICENSE)
+[![License](https://img.shields.io/badge/license-GPL--2.0+-blue)](LICENSE)
 [![Ko-fi](https://img.shields.io/badge/support-Ko--fi-ff5e5b)](https://ko-fi.com/fgcodework)
 
 Native **Joomla 5.4+ / 6** extension for administrators, part of the FG extension series: log in as another user to check what they see, reproduce a problem, or test permissions - to the **frontend** or to the **backend**.
