@@ -84,6 +84,18 @@
 			<option value="1">JYES</option>
 		</field>
 		<field
+			name="recheck_rights"
+			type="radio"
+			layout="joomla.form.field.radio.switcher"
+			label="COM_FGLOGINASUSER_CONFIG_RECHECK_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_RECHECK_DESC"
+			default="0"
+			filter="integer"
+			>
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+		<field
 			name="token_ttl"
 			type="number"
 			label="COM_FGLOGINASUSER_CONFIG_TTL_LABEL"

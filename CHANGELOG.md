@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.0 - 2026-10-30
+
+Audit and security.
+
+- **The audit says how an impersonation ended**: the log row and the User Actions Log now tell *returned with the button*, *ended by a logout in the impersonated session*, *time limit expired* or *the administrator lost the right* (new). Before, all of them read "ended".
+- **Optional re-check of the administrator's rights on every request** (Options -> Security, *off* by default): while someone is logged in as another user, the original administrator is loaded again on every request; if the account is gone, blocked, not activated or has lost the right to log in as others, the impersonation ends at once (the session is closed, not handed back). A failure of the check itself never ends an impersonation (logged).
+- **Logs: export and more filters**: *Export* in the toolbar gives CSV, CSV for Excel (semicolon) or JSON of everything that matches the current filters (not only the page). Filters were added for the administrator, the user logged in as, and a from/to date (whole days in the time zone of the person looking at the log). The export is streamed in batches, needs the *View logs* right, never contains the token hash, protects spreadsheets against formula injection (cells starting with `= + - @` get a leading apostrophe), and is recorded in the User Actions Log.
+- **Wrong identity confirmations are limited per administrator**, not only per session: the number of wrong attempts in the last 15 minutes is counted from the audit log, so opening another session does not give fresh attempts. Check, verification and the log row run under a per-administrator lock, so parallel guesses are counted one after another. Only active when identity confirmation is turned on.
+- Fix: the Logs search combined with the reason filter reused one bound variable, so the search text could be replaced by the reason pattern. Each bound value now has its own variable.
+- Tests: `tests/release140.py`.
+
 ## 1.3.0 - 2026-10-21
 
 - **Joomla 5.4+ is supported** besides Joomla 6. The installer used to refuse anything older than Joomla 6 although nothing in the code needs it. Verified on a clean Joomla 5.4.5 (PHP 8.3): install, the full test suite (audit, all release suites including the real TOTP and the time limit) and the real-browser tests of the buttons and of the dialog. The only differences were test-environment ones (site name in the mail subject, the Joomla 5 guided tour that redirects the first backend page).

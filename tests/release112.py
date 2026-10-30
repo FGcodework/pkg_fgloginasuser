@@ -92,7 +92,7 @@ for i in range(5):
     raw_start(b, alice, 'site', password='nope%d' % i)
 r = raw_start(b, alice, 'site', password=PW_ADM)
 check('after 5 wrong attempts even the right password is locked out', not ok(r) and last_note() == 'denied|COM_FGLOGINASUSER_ERR_STEPUP_LOCKED', last_note())
-check('a new session is not locked (the limit protects an open session)', ok(raw_start(admin_login('adm'), alice, 'site', password=PW_ADM)))
+check('a new session is locked as well since 1.4.0 (the limit is per administrator); the old session-only behaviour is gone', not ok(raw_start(admin_login('adm'), alice, 'site', password=PW_ADM)))
 
 print('\n== second factor')
 reset(); set_rules(RIGHTS); set_params({'stepup_mode': 2})

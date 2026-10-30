@@ -28,7 +28,7 @@ use Joomla\Registry\Registry;
  * 1 = password, 2 = password and, when the account has one, a code of its second factor.
  *
  * A successful check is remembered in the session for "stepup_minutes" and only for that very user (an
- * impersonated session never inherits it). Wrong attempts are limited per session.
+ * impersonated session never inherits it). Wrong attempts are limited per session and, from the audit log, per administrator across sessions.
  *
  * Second-factor methods that need a browser ceremony or send the code on demand (WebAuthn, e-mail) cannot be
  * asked for here; an account that has only those is asked for the password only.
@@ -94,6 +94,18 @@ final class StepUp
             }
 
             $fail = ['n' => 0, 'ts' => 0];
+        }
+
+        // Across sessions: the same administrator cannot get fresh attempts by opening another session.
+        // Stricter of the two limits wins; when the audit table cannot be read, the session limit still applies.
+        try {
+            $store = new LogStore(Factory::getContainer()->get(DatabaseInterface::class));
+
+            if ($store->recentStepUpFailures((int) $actor->id, self::LOCK_SECONDS) >= self::MAX_FAILURES) {
+                return 'COM_FGLOGINASUSER_ERR_STEPUP_LOCKED';
+            }
+        } catch (\Throwable $e) {
+            Log::add('Step-up failure count failed: ' . $e->getMessage(), Log::WARNING, 'com_fgloginasuser');
         }
 
         // Fail closed: when the second factor is required, a failure to find out about it must never fall back to the

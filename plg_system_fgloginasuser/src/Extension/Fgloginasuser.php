@@ -60,7 +60,7 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
             return;
         }
 
-        EndRecorder::record($app, $marker);
+        EndRecorder::record($app, $marker, EndRecorder::LOGOUT);
         SessionSwitcher::destroyCurrent($app);
 
         $event->stopPropagation();
@@ -75,13 +75,46 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
         $app    = $this->getApplication();
         $marker = $app ? SessionSwitcher::getMarker($app) : null;
 
-        if ($marker === null || $marker['client'] !== ($app->isClient('administrator') ? 'administrator' : 'site') || !SessionSwitcher::isExpired($marker)) {
+        if ($marker === null || $marker['client'] !== ($app->isClient('administrator') ? 'administrator' : 'site')) {
             return;
         }
 
-        EndRecorder::record($app, $marker, 'COM_FGLOGINASUSER_NOTE_TIMEOUT');
-        SessionSwitcher::destroyCurrent($app);
-        $app->redirect($app->isClient('administrator') ? Uri::base() : Uri::root());
+        if (SessionSwitcher::isExpired($marker)) {
+            EndRecorder::record($app, $marker, EndRecorder::TIMEOUT);
+            SessionSwitcher::destroyCurrent($app);
+            $app->redirect($app->isClient('administrator') ? Uri::base() : Uri::root());
+
+            return;
+        }
+
+        if ($this->actorLostRights($app, $marker)) {
+            EndRecorder::record($app, $marker, EndRecorder::RIGHTS);
+            SessionSwitcher::destroyCurrent($app);
+            $app->redirect($app->isClient('administrator') ? Uri::base() : Uri::root());
+        }
+    }
+
+    /**
+     * Optional (off by default): while impersonating, the original administrator is re-checked on every request.
+     * Only runs during an impersonation. Any failure to check leaves the impersonation alone.
+     */
+    private function actorLostRights($app, array $marker): bool
+    {
+        try {
+            if (!(int) ComponentHelper::getParams('com_fgloginasuser')->get('recheck_rights', 0) || !class_exists(AccessPolicy::class)) {
+                return false;
+            }
+
+            $actor = Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById((int) $marker['actor_id']);
+            $client = $marker['client'] === 'administrator' ? AccessPolicy::CLIENT_ADMIN : AccessPolicy::CLIENT_SITE;
+
+            return (new AccessPolicy(ComponentHelper::getParams('com_fgloginasuser')))->evaluateActor($actor, $client) !== null;
+        } catch (\Throwable $e) {
+            Log::addLogger(['text_file' => 'com_fgloginasuser.log.php'], Log::WARNING, ['com_fgloginasuser']);
+            Log::add('Rights re-check failed: ' . $e->getMessage(), Log::WARNING, 'com_fgloginasuser');
+
+            return false;
+        }
     }
 
     public function onBeforeCompileHead(): void

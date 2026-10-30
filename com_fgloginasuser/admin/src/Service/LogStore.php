@@ -67,6 +67,65 @@ final class LogStore
     }
 
     /**
+     * Wrong step-up attempts of one administrator in the last $seconds, across all of the administrator's sessions.
+     * Derived from the denied rows of this table; a later successful login of the same administrator starts counting anew.
+     */
+    public function recentStepUpFailures(int $actorId, int $seconds): int
+    {
+        $since = Factory::getDate('-' . max(1, $seconds) . ' seconds')->toSql();
+        $db    = $this->db;
+
+        $okQuery = $db->createQuery()
+            ->select('MAX(' . $db->quoteName('created') . ')')
+            ->from($db->quoteName(self::TABLE))
+            ->where($db->quoteName('actor_id') . ' = :a1')
+            ->where($db->quoteName('status') . ' <> ' . $db->quote(self::STATUS_DENIED))
+            ->bind(':a1', $actorId, ParameterType::INTEGER);
+        $lastOk = (string) $db->setQuery($okQuery)->loadResult();
+
+        if ($lastOk !== '' && $lastOk > $since) {
+            $since = $lastOk;
+        }
+
+        $notes = ['COM_FGLOGINASUSER_ERR_STEPUP_PASSWORD', 'COM_FGLOGINASUSER_ERR_STEPUP_CODE'];
+        $query = $db->createQuery()
+            ->select('COUNT(*)')
+            ->from($db->quoteName(self::TABLE))
+            ->where($db->quoteName('actor_id') . ' = :a2')
+            ->where($db->quoteName('status') . ' = ' . $db->quote(self::STATUS_DENIED))
+            ->where($db->quoteName('note') . ' IN (' . implode(',', array_map([$db, 'quote'], $notes)) . ')')
+            ->where($db->quoteName('created') . ' > :since')
+            ->bind(':a2', $actorId, ParameterType::INTEGER)
+            ->bind(':since', $since);
+
+        return (int) $db->setQuery($query)->loadResult();
+    }
+
+    /**
+     * Named database lock; false when it could not be obtained within $wait seconds (callers fail closed).
+     */
+    public function lock(string $name, int $wait = 5): bool
+    {
+        try {
+            $query = $this->db->createQuery()->select('GET_LOCK(:n, ' . (int) $wait . ')')->bind(':n', $name);
+
+            return (int) $this->db->setQuery($query)->loadResult() === 1;
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    public function unlock(string $name): void
+    {
+        try {
+            $query = $this->db->createQuery()->select('RELEASE_LOCK(:n)')->bind(':n', $name);
+            $this->db->setQuery($query)->loadResult();
+        } catch (\Throwable $e) {
+            // The lock disappears with the connection anyway.
+        }
+    }
+
+    /**
      * Creates a pending login-token row only while the administrator has fewer than
      * $max unused tokens. The count and the insert run under a per-administrator named
      * lock, so parallel requests cannot all pass the check before any of them inserts.

@@ -105,6 +105,16 @@ class HtmlView extends BaseHtmlView
                 ->listCheck(false);
         }
 
+        $export = $toolbar->dropdownButton('export-group')
+            ->text('COM_FGLOGINASUSER_LOGS_EXPORT')
+            ->toggleSplit(false)
+            ->icon('icon-download')
+            ->listCheck(false);
+        $exportChild = $export->getChildToolbar();
+        $exportChild->standardButton('exportcsv', 'COM_FGLOGINASUSER_LOGS_EXPORT_CSV', 'logs.exportCsv')->listCheck(false)->icon('icon-download');
+        $exportChild->standardButton('exportexcel', 'COM_FGLOGINASUSER_LOGS_EXPORT_CSV_EXCEL', 'logs.exportExcel')->listCheck(false)->icon('icon-download');
+        $exportChild->standardButton('exportjson', 'COM_FGLOGINASUSER_LOGS_EXPORT_JSON', 'logs.exportJson')->listCheck(false)->icon('icon-download');
+
         if ($user->authorise('core.admin', 'com_fgloginasuser') || $user->authorise('core.options', 'com_fgloginasuser')) {
             ToolbarHelper::preferences('com_fgloginasuser');
         }

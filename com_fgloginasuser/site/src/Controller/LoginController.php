@@ -163,7 +163,7 @@ class LoginController extends BaseController
             return;
         }
 
-        EndRecorder::record($this->app, $marker);
+        EndRecorder::record($this->app, $marker, EndRecorder::RETURNED);
 
         SessionSwitcher::destroyCurrent($this->app);
 

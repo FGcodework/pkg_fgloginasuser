@@ -31,7 +31,12 @@ final class ActionLogger
     public const STARTED_SITE_REASON  = 'COM_FGLOGINASUSER_ACTIONLOG_STARTED_SITE_REASON';
     public const STARTED_ADMIN_REASON = 'COM_FGLOGINASUSER_ACTIONLOG_STARTED_ADMIN_REASON';
     public const ENDED         = 'COM_FGLOGINASUSER_ACTIONLOG_ENDED';
+    public const ENDED_RETURNED = 'COM_FGLOGINASUSER_ACTIONLOG_ENDED_RETURNED';
+    public const ENDED_LOGOUT   = 'COM_FGLOGINASUSER_ACTIONLOG_ENDED_LOGOUT';
+    public const ENDED_TIMEOUT  = 'COM_FGLOGINASUSER_ACTIONLOG_ENDED_TIMEOUT';
+    public const ENDED_RIGHTS   = 'COM_FGLOGINASUSER_ACTIONLOG_ENDED_RIGHTS';
     public const DENIED        = 'COM_FGLOGINASUSER_ACTIONLOG_DENIED';
+    public const EXPORTED      = 'COM_FGLOGINASUSER_ACTIONLOG_EXPORTED';
 
     /**
      * @param   string  $reason  Language key or plain text; only used by DENIED.
@@ -43,7 +48,8 @@ final class ActionLogger
         string $actorName,
         int $targetId,
         string $targetName,
-        string $reason = ''
+        string $reason = '',
+        array $extra = []
     ): void {
         if (!PluginHelper::isEnabled('actionlog', 'fgloginasuser')) {
             return;
@@ -62,7 +68,7 @@ final class ActionLogger
                 'target'      => $targetName !== '' ? $targetName : '#' . $targetId,
                 'targetlink'  => 'index.php?option=com_users&task=user.edit&id=' . $targetId,
                 'reason'      => $reason,
-            ];
+            ] + $extra;
 
             $app->bootComponent('actionlogs')
                 ->getMVCFactory()

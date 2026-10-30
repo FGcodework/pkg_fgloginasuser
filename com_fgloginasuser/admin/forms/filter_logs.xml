@@ -9,6 +9,34 @@
 			hint="JSEARCH_FILTER"
 		/>
 		<field
+			name="actor"
+			type="text"
+			label="COM_FGLOGINASUSER_LOGS_FILTER_ACTOR"
+			hint="COM_FGLOGINASUSER_LOGS_FILTER_ACTOR"
+		/>
+		<field
+			name="target"
+			type="text"
+			label="COM_FGLOGINASUSER_LOGS_FILTER_TARGET"
+			hint="COM_FGLOGINASUSER_LOGS_FILTER_TARGET"
+		/>
+		<field
+			name="date_from"
+			type="calendar"
+			label="COM_FGLOGINASUSER_LOGS_FILTER_DATE_FROM"
+			hint="COM_FGLOGINASUSER_LOGS_FILTER_DATE_FROM"
+			format="%Y-%m-%d"
+			translateformat="false"
+		/>
+		<field
+			name="date_to"
+			type="calendar"
+			label="COM_FGLOGINASUSER_LOGS_FILTER_DATE_TO"
+			hint="COM_FGLOGINASUSER_LOGS_FILTER_DATE_TO"
+			format="%Y-%m-%d"
+			translateformat="false"
+		/>
+		<field
 			name="client"
 			type="list"
 			label="COM_FGLOGINASUSER_COL_WHERE"

@@ -87,18 +87,38 @@ class ImpersonateController extends BaseController
         }
 
         // Re-authentication of the administrator (off by default). Never passed on or stored.
-        $stepError = StepUp::verify(
-            $this->app,
-            $params,
-            $actor,
-            (string) $this->input->post->get('stepup_password', '', 'RAW'),
-            (string) $this->input->post->getString('stepup_code', '')
-        );
+        // Check, verification and the denied row run under one lock per administrator, so parallel guesses
+        // from several sessions are counted one after the other.
+        $stepLock = null;
 
-        if ($stepError !== null) {
-            $this->deny($log, $actor, $target, $targetId, $client, $ip, $stepError);
+        if (StepUp::mode($params) > 0) {
+            $stepLock = 'fgloginasuser.stepup.' . (int) $actor->id;
 
-            return;
+            if (!$log->lock($stepLock)) {
+                $this->deny($log, $actor, $target, $targetId, $client, $ip, 'COM_FGLOGINASUSER_ERR_STEPUP_LOCKED');
+
+                return;
+            }
+        }
+
+        try {
+            $stepError = StepUp::verify(
+                $this->app,
+                $params,
+                $actor,
+                (string) $this->input->post->get('stepup_password', '', 'RAW'),
+                (string) $this->input->post->getString('stepup_code', '')
+            );
+
+            if ($stepError !== null) {
+                $this->deny($log, $actor, $target, $targetId, $client, $ip, $stepError);
+
+                return;
+            }
+        } finally {
+            if ($stepLock !== null) {
+                $log->unlock($stepLock);
+            }
         }
 
         $log->purgeOlderThan((int) $params->get('log_retention_days', 365), Environment::sessionsInDatabase($this->app));
@@ -192,7 +212,7 @@ class ImpersonateController extends BaseController
         $container = Factory::getContainer();
 
         // Audit problems must never keep the user inside the foreign identity.
-        EndRecorder::record($this->app, $marker);
+        EndRecorder::record($this->app, $marker, EndRecorder::RETURNED);
 
         $actor = $container->get(UserFactoryInterface::class)->loadUserById((int) $marker['actor_id']);
 
