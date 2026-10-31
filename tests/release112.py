@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests of 1.1.2: confirmation of the administrator's identity (password / second factor) before an impersonation."""
-exec(open('/tmp/jtest/e2e.py').read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
+exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), 'e2e.py')).read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
 import base64, hashlib, hmac, struct
 
 RIGHTS = {'core.manage': {'7': 1, '6': 1}, 'fgloginasuser.frontend': {'7': 1, '6': 1}, 'fgloginasuser.backend': {'7': 1, '6': 1}, 'fgloginasuser.logs': {'7': 1}}

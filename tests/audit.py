@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Regression tests for the findings of the external audit of 1.0.5 (each check states the SAFE behaviour)."""
-exec(open('/tmp/jtest/e2e.py').read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
+exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), 'e2e.py')).read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
 import os
 
-CONF = '/tmp/jtest/www/configuration.php'
+CONF = WWW + '/configuration.php'
 adm = ID('adm')
 GRP = lambda u: sql("select group_concat(group_id) from jos_user_usergroup_map where user_id=%s" % ID(u))
 
@@ -45,7 +45,7 @@ ALL_RIGHTS = {'core.manage': {'7': 1, '6': 1}, 'fgloginasuser.frontend': {'7': 1
 # make sure fixtures exist
 if not sql("select id from jos_users where username='xena'"):
     subprocess.run(['php', 'cli/joomla.php', 'user:add', '--username=xena', '--name=Xena Both', '--password=' + PW,
-                    '--email=xena@example.test', '--usergroup=Registered,Manager'], cwd='/tmp/jtest/www', capture_output=True)
+                    '--email=xena@example.test', '--usergroup=Registered,Manager'], cwd=WWW, capture_output=True)
 xena = ID('xena')
 sql("update jos_users set block=0, requireReset=0 where username in ('adm','alice','bob','carol','xena','mike')")
 

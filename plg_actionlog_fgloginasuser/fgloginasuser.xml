@@ -6,7 +6,7 @@
 	<copyright>(C) 2026 Fero</copyright>
 	<license>GNU General Public License version 2 or later; see LICENSE</license>
 	<authorUrl>https://github.com/FGcodework/pkg_fgloginasuser</authorUrl>
-	<version>1.5.0</version>
+	<version>1.6.0</version>
 	<description>PLG_ACTIONLOG_FGLOGINASUSER_XML_DESCRIPTION</description>
 	<namespace path="src">FG\Plugin\Actionlog\Fgloginasuser</namespace>
 	<files>
@@ -18,5 +18,9 @@
 		<language tag="en-GB">language/en-GB/plg_actionlog_fgloginasuser.sys.ini</language>
 		<language tag="sk-SK">language/sk-SK/plg_actionlog_fgloginasuser.ini</language>
 		<language tag="sk-SK">language/sk-SK/plg_actionlog_fgloginasuser.sys.ini</language>
+		<language tag="cs-CZ">language/cs-CZ/plg_actionlog_fgloginasuser.ini</language>
+		<language tag="cs-CZ">language/cs-CZ/plg_actionlog_fgloginasuser.sys.ini</language>
+		<language tag="de-DE">language/de-DE/plg_actionlog_fgloginasuser.ini</language>
+		<language tag="de-DE">language/de-DE/plg_actionlog_fgloginasuser.sys.ini</language>
 	</languages>
 </extension>

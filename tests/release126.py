@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Tests of 1.2.6: when the core user list markup changes, the buttons are skipped and a diagnostic is logged (once per session)."""
-exec(open('/tmp/jtest/e2e.py').read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
+exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), 'e2e.py')).read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
 import os
 
 RIGHTS = {'core.manage': {'7': 1, '6': 1}, 'fgloginasuser.frontend': {'7': 1, '6': 1}, 'fgloginasuser.backend': {'7': 1, '6': 1}}
-WWW = '/tmp/jtest/www'
 CORE = WWW + '/administrator/components/com_users/tmpl/users/default.php'
 OVR_DIR = WWW + '/administrator/templates/atum/html/com_users/users'
 OVR = OVR_DIR + '/default.php'

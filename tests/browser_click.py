@@ -6,7 +6,9 @@ Usage: python3 browser_click.py
 import subprocess, sys
 from playwright.sync_api import sync_playwright
 
-BASE = 'http://127.0.0.1:8080'
+import os, shlex
+BASE = os.environ.get('FG_BASE', 'http://127.0.0.1:8080')
+MYSQL = ['mysql'] + shlex.split(os.environ.get('FG_MYSQL', '')) + [os.environ.get('FG_DB', 'joomla')]
 SCREENS = ['com_fgloginasuser&view=users', 'com_users&view=users']
 fails = 0
 
@@ -24,7 +26,7 @@ def login(ctx):
     pg.fill('#mod-login-username', 'root')
     pg.fill('#mod-login-password', 'Rootpass-12345!')
     pg.click('button.login-button, #btn-login-submit')
-    pg.wait_for_selector('.header-title, #menu', timeout=15000)
+    pg.wait_for_selector('#mod-login-username', state='detached', timeout=15000); pg.wait_for_load_state()
     return pg
 
 
@@ -63,7 +65,7 @@ with sync_playwright() as p:
         tab.close()
 
         # predefined reasons: drop-down, "Other..." needs text, preset + note is stored as "Label: note"
-        subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_SET(COALESCE(NULLIF(params,''),'{}'),'$.reason_presets',JSON_OBJECT('reason_presets0',JSON_OBJECT('label','Customer support'),'reason_presets1',JSON_OBJECT('label','Permissions test'))) where element='com_fgloginasuser' and type='component'"], check=True)
+        subprocess.run(MYSQL + ['-e', "update jos_extensions set params=JSON_SET(COALESCE(NULLIF(params,''),'{}'),'$.reason_presets',JSON_OBJECT('reason_presets0',JSON_OBJECT('label','Customer support'),'reason_presets1',JSON_OBJECT('label','Permissions test'))) where element='com_fgloginasuser' and type='component'"], check=True)
         open_screen(pg, screen)
         pg.locator('.fg-las-btn[data-client="site"]').first.click()
         pg.wait_for_selector('#fgLasDialog[open]', timeout=5000)
@@ -82,10 +84,10 @@ with sync_playwright() as p:
         tab.wait_for_timeout(800)
         check(screen + ': preset + note arrives as "Label: note"', 'Customer support: ticket 9' in (tab.locator('#fg-las-bar').inner_text() if tab.locator('#fg-las-bar').count() else ''))
         tab.close()
-        subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_REMOVE(params,'$.reason_presets') where element='com_fgloginasuser' and type='component'"], check=True)
+        subprocess.run(MYSQL + ['-e', "update jos_extensions set params=JSON_REMOVE(params,'$.reason_presets') where element='com_fgloginasuser' and type='component'"], check=True)
 
         # step-up (off by default): the dialog asks for the administrator's password
-        subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_SET(COALESCE(NULLIF(params,''),'{}'),'$.stepup_mode',1) where element='com_fgloginasuser' and type='component'"], check=True)
+        subprocess.run(MYSQL + ['-e', "update jos_extensions set params=JSON_SET(COALESCE(NULLIF(params,''),'{}'),'$.stepup_mode',1) where element='com_fgloginasuser' and type='component'"], check=True)
         open_screen(pg, screen)
         pg.locator('.fg-las-btn[data-client="site"]').first.click()
         pg.wait_for_selector('#fgLasDialog[open]', timeout=5000)
@@ -103,10 +105,10 @@ with sync_playwright() as p:
         tab.close()
         open_screen(pg, screen)
         check(screen + ': step-up: the password is not asked again while the confirmation is valid', pg.locator('#fgLasStepPw').count() == 0)
-        subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_REMOVE(params,'$.stepup_mode') where element='com_fgloginasuser' and type='component'"], check=True)
+        subprocess.run(MYSQL + ['-e', "update jos_extensions set params=JSON_REMOVE(params,'$.stepup_mode') where element='com_fgloginasuser' and type='component'"], check=True)
 
         # required reason: an empty field keeps the dialog open
-        subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_SET(COALESCE(NULLIF(params,''),'{}'),'$.reason_mode',2) where element='com_fgloginasuser' and type='component'"], check=True)
+        subprocess.run(MYSQL + ['-e', "update jos_extensions set params=JSON_SET(COALESCE(NULLIF(params,''),'{}'),'$.reason_mode',2) where element='com_fgloginasuser' and type='component'"], check=True)
         open_screen(pg, screen)
         pg.locator('.fg-las-btn[data-client="site"]').first.click()
         pg.wait_for_selector('#fgLasDialog[open]', timeout=5000)
@@ -115,7 +117,7 @@ with sync_playwright() as p:
         check(screen + ': required reason keeps the dialog open when empty', pg.locator('#fgLasDialog[open]').count() == 1)
         pg.click('#fgLasDialogCancel')
         pg.wait_for_timeout(400)
-        subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=JSON_SET(params,'$.reason_mode',1) where element='com_fgloginasuser' and type='component'"], check=True)
+        subprocess.run(MYSQL + ['-e', "update jos_extensions set params=JSON_SET(params,'$.reason_mode',1) where element='com_fgloginasuser' and type='component'"], check=True)
 
         # backend button -> same tab becomes the backend of the user
         open_screen(pg, screen)

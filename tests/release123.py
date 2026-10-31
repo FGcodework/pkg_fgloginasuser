@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests of 1.2.3: log clean-up must never delete a live impersonation."""
-exec(open('/tmp/jtest/e2e.py').read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
+exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), 'e2e.py')).read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
 import hashlib
 
 RIGHTS = {'core.manage': {'7': 1, '6': 1}, 'fgloginasuser.frontend': {'7': 1, '6': 1}, 'fgloginasuser.backend': {'7': 1, '6': 1}, 'fgloginasuser.logs': {'7': 1}}
@@ -83,7 +83,7 @@ check('younger than a day: left active', row(legacy_new).startswith('active|'), 
 check('the presumed note is readable on the Logs screen and survives another "delete all"', 'Presumed ended' in rb.get(LOGS + '&list[limit]=100').text and (purge_all(rb) or row(legacy_old).startswith('ended|')))
 
 print('\n== sessions kept outside the database')
-pr = subprocess.run(['php', '/tmp/jtest/reconcile_probe.php', '/tmp/jtest/www', root, alice], capture_output=True, text=True, cwd='/tmp/jtest/www')
+pr = subprocess.run(['php', HERE + '/reconcile_probe.php', WWW, root, alice], capture_output=True, text=True, cwd=WWW)
 try:
     out = json.loads(pr.stdout.strip().splitlines()[-1])
 except Exception:

@@ -7,7 +7,9 @@ Usage: python3 browser_fallback.py
 import subprocess, sys
 from playwright.sync_api import sync_playwright
 
-BASE = 'http://127.0.0.1:8080'
+import os, shlex
+BASE = os.environ.get('FG_BASE', 'http://127.0.0.1:8080')
+MYSQL = ['mysql'] + shlex.split(os.environ.get('FG_MYSQL', '')) + [os.environ.get('FG_DB', 'joomla')]
 fails = 0
 
 
@@ -18,11 +20,11 @@ def check(name, ok, info=''):
 
 
 def params(js):
-    subprocess.run(['mysql', 'joomla', '-e', "update jos_extensions set params=%s where element='com_fgloginasuser' and type='component'" % js], check=True)
+    subprocess.run(MYSQL + ['-e', "update jos_extensions set params=%s where element='com_fgloginasuser' and type='component'" % js], check=True)
 
 
 params("JSON_SET(COALESCE(NULLIF(params,''),'{}'),'$.reason_mode',2,'$.reason_other',0,'$.stepup_mode',1,'$.reason_presets',JSON_OBJECT('reason_presets0',JSON_OBJECT('label','Customer support'),'reason_presets1',JSON_OBJECT('label','Permissions test')))")
-subprocess.run(['mysql', 'joomla', '-e', "delete from jos_fgloginasuser_logs"], check=True)
+subprocess.run(MYSQL + ['-e', "delete from jos_fgloginasuser_logs"], check=True)
 try:
     with sync_playwright() as p:
         browser = p.chromium.launch()
@@ -37,7 +39,7 @@ try:
         pg.fill('#mod-login-username', 'root')
         pg.fill('#mod-login-password', 'Rootpass-12345!')
         pg.click('button.login-button, #btn-login-submit')
-        pg.wait_for_selector('.header-title, #menu', timeout=15000)
+        pg.wait_for_selector('#mod-login-username', state='detached', timeout=15000); pg.wait_for_load_state()
         check('(setup) showModal really is missing', pg.evaluate("typeof HTMLDialogElement.prototype.showModal") == 'undefined')
         pg.goto(BASE + '/administrator/index.php?option=com_users&view=users&filter[search]=carol')
         if pg.locator('.shepherd-button-secondary').count():
@@ -78,7 +80,7 @@ try:
         browser.close()
 finally:
     params("JSON_REMOVE(params,'$.reason_mode','$.reason_other','$.stepup_mode','$.reason_presets')")
-    subprocess.run(['mysql', 'joomla', '-e', "delete from jos_fgloginasuser_logs"], check=True)
+    subprocess.run(MYSQL + ['-e', "delete from jos_fgloginasuser_logs"], check=True)
 
 print('\nFAILED: %d' % fails if fails else '\nall fallback checks passed')
 sys.exit(1 if fails else 0)

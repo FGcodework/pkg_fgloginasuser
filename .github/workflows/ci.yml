@@ -1,0 +1,93 @@
+name: CI
+
+# Runs on every push and pull request: lint, language check and the whole test suite on a real Joomla
+# (5.4 and 6) with MariaDB, the extension package installed exactly as a user would install it.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: PHP, XML and language files
+        run: |
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l > /dev/null
+          for f in $(find . -name '*.xml' -not -path './.git/*'); do python3 -c "import sys, xml.dom.minidom as m; m.parse(sys.argv[1])" "$f"; done
+          python3 tests/check_languages.py
+
+  e2e:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        joomla: ['5.4.5', '6.1.2']
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: joomla
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      FG_BASE: http://127.0.0.1:8080
+      FG_WWW: ${{ github.workspace }}/joomla
+      FG_DB: joomla
+      FG_MYSQL: -h127.0.0.1 -uroot -proot
+      FG_MAILS: /tmp/fg-mails.txt
+      FG_SITE: FGTest
+      FG_PKG: ${{ github.workspace }}/dist/package.zip
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, pdo_mysql, mbstring, gd, intl, zip, curl, simplexml, xml, json
+          ini-values: memory_limit=512M
+
+      - name: Build the package
+        run: |
+          bash build.sh
+          cp dist/pkg_fgloginasuser_v*.zip dist/package.zip
+
+      - name: Download Joomla ${{ matrix.joomla }}
+        run: >
+          curl -fsSL -o /tmp/joomla.zip
+          "https://github.com/joomla/joomla-cms/releases/download/${{ matrix.joomla }}/Joomla_${{ matrix.joomla }}-Stable-Full_Package.zip"
+
+      - name: Python dependencies
+        run: |
+          pip install requests playwright
+          playwright install --with-deps chromium
+
+      - name: Set up Joomla with the extension, test users, mail sink and webhook receiver
+        env:
+          JOOMLA_ZIP: /tmp/joomla.zip
+          JOOMLA_DIR: ${{ github.workspace }}/joomla
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASS: root
+          DB_NAME: joomla
+        run: bash tests/ci/setup.sh
+
+      - name: Run the test suites
+        run: bash tests/ci/run.sh
+
+      - name: Logs of a failed run
+        if: failure()
+        run: |
+          tail -n 60 /tmp/fg-php.log || true
+          for f in /tmp/fg-suite-*.log; do echo "=== $f"; tail -n 25 "$f"; done

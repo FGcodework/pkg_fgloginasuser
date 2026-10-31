@@ -5,7 +5,7 @@
  * Prints one JSON object; used by release123.py.
  */
 const _JEXEC = 1;
-define('JPATH_BASE', $argv[1] ?? '/tmp/jtest/www');
+define('JPATH_BASE', $argv[1] ?? getenv('FG_WWW') ?: '/tmp/jtest/www');
 require_once JPATH_BASE . '/includes/defines.php';
 require_once JPATH_BASE . '/includes/framework.php';
 require_once JPATH_ADMINISTRATOR . '/components/com_fgloginasuser/src/Service/LogStore.php';

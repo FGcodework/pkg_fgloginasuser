@@ -4,7 +4,7 @@
  * Prints one JSON object; used by audit.py (finding: a refusal must not overwrite a concurrent success).
  */
 const _JEXEC = 1;
-define('JPATH_BASE', $argv[1] ?? '/tmp/jtest/www');
+define('JPATH_BASE', $argv[1] ?? getenv('FG_WWW') ?: '/tmp/jtest/www');
 require_once JPATH_BASE . '/includes/defines.php';
 require_once JPATH_BASE . '/includes/framework.php';
 // Optional 4th argument: another copy of LogStore.php (to demonstrate the behaviour of an older release).

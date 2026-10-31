@@ -6,7 +6,7 @@
 	<copyright>(C) 2026 Fero</copyright>
 	<license>GNU General Public License version 2 or later; see LICENSE</license>
 	<authorUrl>https://github.com/FGcodework/pkg_fgloginasuser</authorUrl>
-	<version>1.5.0</version>
+	<version>1.6.0</version>
 	<description>PLG_SYSTEM_FGLOGINASUSER_XML_DESCRIPTION</description>
 	<namespace path="src">FG\Plugin\System\Fgloginasuser</namespace>
 	<files>
@@ -40,5 +40,9 @@
 		<language tag="en-GB">language/en-GB/plg_system_fgloginasuser.sys.ini</language>
 		<language tag="sk-SK">language/sk-SK/plg_system_fgloginasuser.ini</language>
 		<language tag="sk-SK">language/sk-SK/plg_system_fgloginasuser.sys.ini</language>
+		<language tag="cs-CZ">language/cs-CZ/plg_system_fgloginasuser.ini</language>
+		<language tag="cs-CZ">language/cs-CZ/plg_system_fgloginasuser.sys.ini</language>
+		<language tag="de-DE">language/de-DE/plg_system_fgloginasuser.ini</language>
+		<language tag="de-DE">language/de-DE/plg_system_fgloginasuser.sys.ini</language>
 	</languages>
 </extension>

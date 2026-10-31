@@ -2,14 +2,14 @@
 """Tests of 1.5.0: per-group maximum duration, bar stylesheet, webhook, history on the user edit page.
 Needs the HTTPS receiver /tmp/hook/receiver.py (self-signed certificate trusted by the PHP server, see env.sh)."""
 import datetime, hashlib, hmac
-exec(open('/tmp/jtest/e2e.py').read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
+exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), 'e2e.py')).read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
 
 RIGHTS = {'core.manage': {'7': 1, '6': 1}, 'fgloginasuser.frontend': {'7': 1, '6': 1}, 'fgloginasuser.backend': {'7': 1, '6': 1},
           'fgloginasuser.logs': {'7': 1, '6': 1}}
 START = '/administrator/index.php?option=com_fgloginasuser&task=impersonate.start'
 adm, carol, alice = ID('adm'), ID('carol'), ID('alice')
 RECV = '/tmp/hook/received.jsonl'
-LOGFILE = '/tmp/jtest/www/administrator/logs/com_fgloginasuser.log.php'
+LOGFILE = WWW + '/administrator/logs/com_fgloginasuser.log.php'
 
 
 def begin(b, target=None, client='administrator'):

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0 - 2026-10-31
+
+- **Czech (cs-CZ) and German (de-DE) translations** besides English and Slovak: the component (backend and frontend), both plugins and the package description; all 8 language files per language. `tests/check_languages.py` compares every translation with en-GB (same keys, same `%s` / `%1$s` / `%d`, `{placeholders}`, HTML tags and `\n`, valid ini syntax, language declared in every manifest) and runs in CI, so a new string cannot be forgotten. The Czech and German texts were written without a native-speaker review; corrections are welcome as pull requests.
+- **Continuous integration** (`.github/workflows/ci.yml`): on every push and pull request the PHP / XML / language files are checked and the whole test suite (`e2e`, `audit`, `release110` ... `release150`, real-browser tests) runs against a real Joomla **5.4.5 and 6.1.2** with MariaDB, with the extension installed from the built package. `tests/ci/setup.sh` builds that throw-away environment (also usable locally), `tests/ci/run.sh` runs the suites.
+- The test suites no longer contain machine specific paths: address, database, Joomla folder, mail sink and package are taken from the environment variables `FG_BASE`, `FG_DB`, `FG_MYSQL`, `FG_WWW`, `FG_MAILS`, `FG_SITE`, `FG_PKG` (defaults as before). The release workflow also checks the languages.
+- No functional change of the extension.
+
 ## 1.5.0 - 2026-10-30
 
 - **Maximum duration per group**: each row of *Restrictions* has an optional *Max. minutes*. For a person, the shortest of the general *Maximum duration* and the rows that apply to their groups (inherited ones included) wins; an empty or 0 value limits nothing. It also works for rows used only for the duration.

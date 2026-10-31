@@ -20,6 +20,9 @@ jobs:
           for f in $(find . -name '*.xml' -not -path './.git/*'); do python3 -c "import sys, xml.dom.minidom as m; m.parse(sys.argv[1])" "$f"; done
           for f in $(find . -name '*.ini' -not -path './.git/*'); do php -r 'if (@parse_ini_file($argv[1]) === false) { fwrite(STDERR, "Bad ini: $argv[1]\n"); exit(1); }' "$f"; done
 
+      - name: Language files
+        run: python3 tests/check_languages.py
+
       - name: Build
         run: bash build.sh
 

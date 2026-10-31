@@ -7,7 +7,7 @@
 	<copyright>(C) 2026 Fero</copyright>
 	<license>GNU General Public License version 2 or later; see LICENSE</license>
 	<authorUrl>https://github.com/FGcodework/pkg_fgloginasuser</authorUrl>
-	<version>1.5.0</version>
+	<version>1.6.0</version>
 	<description>PKG_FGLOGINASUSER_XML_DESCRIPTION</description>
 	<php_minimum>8.3.0</php_minimum>
 	<scriptfile>script.php</scriptfile>
@@ -19,6 +19,8 @@
 	<languages folder="language">
 		<language tag="en-GB">en-GB/pkg_fgloginasuser.sys.ini</language>
 		<language tag="sk-SK">sk-SK/pkg_fgloginasuser.sys.ini</language>
+		<language tag="cs-CZ">cs-CZ/pkg_fgloginasuser.sys.ini</language>
+		<language tag="de-DE">de-DE/pkg_fgloginasuser.sys.ini</language>
 	</languages>
 	<updateservers>
 		<server type="extension" priority="1" name="FG Login as User">https://raw.githubusercontent.com/FGcodework/pkg_fgloginasuser/master/updates.xml</server>

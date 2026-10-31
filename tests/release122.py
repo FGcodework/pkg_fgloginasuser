@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests of 1.2.2: what depends on the system plugin, and what survives a package update / audit table outage."""
-exec(open('/tmp/jtest/e2e.py').read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
+exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), 'e2e.py')).read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
 
 RIGHTS = {'core.manage': {'7': 1, '6': 1}, 'fgloginasuser.frontend': {'7': 1, '6': 1}, 'fgloginasuser.backend': {'7': 1, '6': 1}, 'fgloginasuser.logs': {'7': 1}}
 START = '/administrator/index.php?option=com_fgloginasuser&task=impersonate.start'
@@ -54,7 +54,7 @@ try:
     print('\n== package update during an impersonation')
     reset(); set_rules(RIGHTS); set_params({})
     b = admin_login('adm'); begin(b, carol, 'administrator')
-    r = subprocess.run(['php', 'cli/joomla.php', 'extension:install', '--path=/tmp/jtest/pkg.zip'], cwd='/tmp/jtest/www', capture_output=True, text=True)
+    r = subprocess.run(['php', 'cli/joomla.php', 'extension:install', '--path=' + PKGZIP], cwd=WWW, capture_output=True, text=True)
     check('the update itself succeeds', 'installed successfully' in r.stdout, r.stdout[-200:])
     check('the impersonation survives it (still carol, bar present)', sess_user(b, 1) == carol and bar(b))
     check('... and ends normally afterwards', 'fg-las-bar' in b.get('/administrator/index.php').text)

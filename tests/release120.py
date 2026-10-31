@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests of 1.2.0: no logging in as users with higher global rights."""
-exec(open('/tmp/jtest/e2e.py').read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
+exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), 'e2e.py')).read().split('# ---------------------------------------------------------------- 1. list + buttons')[0])
 
 # Manager (6) and Administrator (7) may use the login actions
 RIGHTS = {'core.manage': {'6': 1, '7': 1}, 'fgloginasuser.frontend': {'6': 1, '7': 1}, 'fgloginasuser.backend': {'6': 1, '7': 1}}
@@ -34,7 +34,7 @@ ok_, note, b = attempt('adm', adm)
 check('(self is still refused for its own reason)', note == 'COM_FGLOGINASUSER_ERR_SELF', note)
 # a second Administrator
 sql("delete from jos_users where username='adm2'")
-subprocess.run(['php', 'cli/joomla.php', 'user:add', '--username=adm2', '--name=Adm Two', '--password=' + PW, '--email=adm2@example.test', '--usergroup=Administrator'], cwd='/tmp/jtest/www', capture_output=True)
+subprocess.run(['php', 'cli/joomla.php', 'user:add', '--username=adm2', '--name=Adm Two', '--password=' + PW, '--email=adm2@example.test', '--usergroup=Administrator'], cwd=WWW, capture_output=True)
 adm2 = ID('adm2')
 check('Administrator can log in as another Administrator (equal rights)', attempt('adm', adm2)[0])
 # Registered + Administrator target

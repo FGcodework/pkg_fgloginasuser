@@ -3,13 +3,21 @@
 import re, subprocess, sys, json, time
 import requests
 
-BASE = 'http://127.0.0.1:8080'
+import os, shlex
+# Environment of the throw-away Joomla under test (defaults match the author's local set-up; CI sets them, see tests/ci/).
+BASE = os.environ.get('FG_BASE', 'http://127.0.0.1:8080')
+WWW = os.environ.get('FG_WWW', '/tmp/jtest/www')
+MAILS = os.environ.get('FG_MAILS', '/tmp/jtest/mails.txt')
+PKGZIP = os.environ.get('FG_PKG', '/tmp/jtest/pkg.zip')
+SITE = os.environ.get('FG_SITE', 'FGTest')
+HERE = os.path.dirname(os.path.abspath(__file__))
+MYSQL = ['mysql'] + shlex.split(os.environ.get('FG_MYSQL', '')) + [os.environ.get('FG_DB', 'joomla')]
 PW = 'Passw0rd-12345!'
 RESULTS = []
 
 
 def sql(q):
-    r = subprocess.run(['mysql', 'joomla', '-N', '-B', '-e', q], capture_output=True, text=True)
+    r = subprocess.run(MYSQL + ['-N', '-B', '-e', q], capture_output=True, text=True)
     if r.returncode:
         raise RuntimeError(r.stderr)
     return r.stdout.strip()
@@ -406,19 +414,19 @@ set_params({'notify_enabled': '1', 'notify_email': 'ops@example.test', 'button_t
 page = users_page(b)
 check('custom button text with %s applied', 'Go as alice' in page.text)
 check('custom CSS injected but "<" stripped', 'outline:2px solid red' in page.text and '<script>alert(1)' not in page.text)
-open('/tmp/jtest/mails.txt', 'w').close()
+open(MAILS, 'w').close()
 r = start(b, alice, 'site'); imp = Browser(); imp.get(r.headers['Location'])
 time.sleep(0.5)
-mail = open('/tmp/jtest/mails.txt').read()
+mail = open(MAILS).read()
 check('notification mail sent via SMTP (frontend login)', 'ops@example.test' in mail, mail[:300])
 body = re.sub(r'=\r?\n', '', mail)
 check('mail body names admin, target, place and IP', all(x in body for x in ['root', 'alice', 'Frontend', '127.0.0.1']) and 'UTC' in body, body[-500:])
-check('mail subject carries the site name', 'FGTest' in mail, mail[:300])
-open('/tmp/jtest/mails.txt', 'w').close()
+check('mail subject carries the site name', SITE in mail, mail[:300])
+open(MAILS, 'w').close()
 bm2 = admin_login('root'); start(bm2, carol, 'administrator'); time.sleep(0.5)
-check('notification mail sent (backend switch)', 'carol' in open('/tmp/jtest/mails.txt').read() and 'Backend' in re.sub(r'=\r?\n', '', open('/tmp/jtest/mails.txt').read()))
+check('notification mail sent (backend switch)', 'carol' in open(MAILS).read() and 'Backend' in re.sub(r'=\r?\n', '', open(MAILS).read()))
 set_params({'notify_enabled': '1', 'notify_email': 'ops@example.test'})
-cfgp = '/tmp/jtest/www/configuration.php'
+cfgp = WWW + '/configuration.php'
 orig_cfg = open(cfgp).read()
 open(cfgp, 'w').write(orig_cfg.replace('public $smtpport = 1025;', 'public $smtpport = 1;'))
 try:
