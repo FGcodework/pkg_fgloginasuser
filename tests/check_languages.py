@@ -34,8 +34,12 @@ def ph(v):
     return collections.Counter(PLACEHOLDER.findall(v))
 
 
-english = sorted(glob.glob(os.path.join(ROOT, '**', 'en-GB', '*.ini'), recursive=True))
-english = [p for p in english if '/dist/' not in p]
+# Only the extension's own folders: CI unpacks a whole Joomla next to them (and dist/ holds built packages).
+OWN = ('com_fgloginasuser', 'plg_system_fgloginasuser', 'plg_actionlog_fgloginasuser', 'language')
+english = []
+for top in OWN:
+    english += glob.glob(os.path.join(ROOT, top, '**', 'en-GB', '*.ini'), recursive=True)
+english = sorted(english)
 langs = set()
 for en in english:
     ref = load(en)
