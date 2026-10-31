@@ -19,10 +19,13 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 MYSQL=(mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME")
 PW='Passw0rd-12345!'
 
+step() { echo "== $*"; }
+step 'unpack Joomla'
 rm -rf "$JOOMLA_DIR"; mkdir -p "$JOOMLA_DIR"
 unzip -q "$JOOMLA_ZIP" -d "$JOOMLA_DIR"
 cd "$JOOMLA_DIR"
 
+step 'install Joomla'
 php installation/joomla.php install \
   --site-name=FGTest --admin-user="Admin Root" --admin-username=root --admin-password='Rootpass-12345!' \
   --admin-email=root@example.test --db-type=mysqli --db-host="$DB_HOST" --db-user="$DB_USER" --db-pass="$DB_PASS" \
@@ -47,6 +50,7 @@ grep -q "public \$smtpport = 1025;" configuration.php
 # Nothing may redirect or interrupt the first backend page.
 "${MYSQL[@]}" -e "update jos_extensions set enabled=0 where element in ('stats','guidedtours') and type='plugin'"
 
+step 'install the extension and the test users'
 php cli/joomla.php extension:install --path="$FG_PKG"
 
 mkuser() { php cli/joomla.php user:add --username="$1" --name="$2" --password="$PW" --email="$1@example.test" --usergroup="$3" >/dev/null; }
@@ -59,6 +63,7 @@ mkuser sue "Sue Super" "Super Users"
 mkuser adm "Adm Administrator" Administrator
 "${MYSQL[@]}" -e "update jos_users set block=1 where username='dave'"
 
+step 'start webhook receiver, mail sink and web server'
 # Webhook receiver with a self-signed certificate that Joomla's own CA bundle (and PHP) trusts - test environment only.
 mkdir -p /tmp/hook
 openssl req -x509 -newkey rsa:2048 -nodes -keyout /tmp/hook/key.pem -out /tmp/hook/cert.pem -days 30 \

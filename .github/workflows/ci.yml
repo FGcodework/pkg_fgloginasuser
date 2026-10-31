@@ -10,9 +10,9 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
@@ -24,7 +24,7 @@ jobs:
 
   e2e:
     needs: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -50,7 +50,7 @@ jobs:
       FG_SITE: FGTest
       FG_PKG: ${{ github.workspace }}/dist/package.zip
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -68,8 +68,15 @@ jobs:
           curl -fsSL -o /tmp/joomla.zip
           "https://github.com/joomla/joomla-cms/releases/download/${{ matrix.joomla }}/Joomla_${{ matrix.joomla }}-Stable-Full_Package.zip"
 
-      - name: Python dependencies
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Client tools and Python dependencies
         run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends mariadb-client unzip openssl curl
+          mysql --version
           pip install requests playwright
           playwright install --with-deps chromium
 
