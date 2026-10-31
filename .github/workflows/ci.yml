@@ -72,11 +72,11 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Client tools and Python dependencies
+      - name: Python dependencies and tool versions
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends mariadb-client unzip openssl curl
+          # The runner image already has the mysql client, zip, unzip, openssl and curl.
           mysql --version
+          zip -v | head -2
           pip install requests playwright
           playwright install --with-deps chromium
 
@@ -88,7 +88,7 @@ jobs:
           DB_USER: root
           DB_PASS: root
           DB_NAME: joomla
-        run: bash tests/ci/setup.sh
+        run: bash tests/ci/setup.sh 2>&1 | tee /tmp/fg-setup.log; exit ${PIPESTATUS[0]}
 
       - name: Run the test suites
         run: bash tests/ci/run.sh
@@ -96,5 +96,17 @@ jobs:
       - name: Logs of a failed run
         if: failure()
         run: |
-          tail -n 60 /tmp/fg-php.log || true
+          shopt -s nullglob
+          echo "=== setup log"; tail -n 60 /tmp/fg-setup.log 2>/dev/null || echo "(no setup log)"
+          echo "=== php server log"; tail -n 60 /tmp/fg-php.log 2>/dev/null || echo "(no php log)"
           for f in /tmp/fg-suite-*.log; do echo "=== $f"; tail -n 25 "$f"; done
+          ls -la dist 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: logs-joomla-${{ matrix.joomla }}
+          path: |
+            /tmp/fg-*.log
+            /tmp/hook/recv.log
+          if-no-files-found: ignore

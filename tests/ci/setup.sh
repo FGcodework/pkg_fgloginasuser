@@ -76,9 +76,15 @@ export FG_MAILS=${FG_MAILS:-/tmp/fg-mails.txt}
 (PHP_CLI_SERVER_WORKERS=12 setsid nohup php -d curl.cainfo=/tmp/hook/cert.pem -d openssl.cafile=/tmp/hook/cert.pem \
   -d display_errors=1 -d error_reporting=32767 -S "127.0.0.1:$PORT" -t "$JOOMLA_DIR" >/tmp/fg-php.log 2>&1 < /dev/null &)
 
-for i in $(seq 1 30); do
-  curl -s -o /dev/null --max-time 3 "http://127.0.0.1:$PORT/administrator/index.php" && break
+for i in $(seq 1 40); do
+  curl -s -o /dev/null --max-time 5 "http://127.0.0.1:$PORT/administrator/index.php" && break
   sleep 1
 done
-curl -s --max-time 5 "http://127.0.0.1:$PORT/administrator/index.php" | grep -q 'name="passwd"' || { echo "Joomla login page is not served" >&2; exit 1; }
+page=$(curl -s --max-time 30 "http://127.0.0.1:$PORT/administrator/index.php" || true)
+if ! grep -q 'name="passwd"' <<<"$page"; then
+  echo "Joomla login page is not served; first bytes of the answer:" >&2
+  head -c 600 <<<"$page" >&2
+  echo >&2; tail -n 30 /tmp/fg-php.log >&2 || true
+  exit 1
+fi
 echo "ready: $JOOMLA_DIR on port $PORT"
