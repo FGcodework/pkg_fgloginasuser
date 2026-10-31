@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.1 - 2026-10-31
+
+- **Design fix**: the *Export* dropdown in the toolbar of the Logs view is now styled like the neighbouring *Delete* / *Delete all* buttons (it was rendered with a plain black outline). No functional change.
+
 ## 1.6.0 - 2026-10-31
 
 - **Czech (cs-CZ) and German (de-DE) translations** besides English and Slovak: the component (backend and frontend), both plugins and the package description; all 8 language files per language. `tests/check_languages.py` compares every translation with en-GB (same keys, same `%s` / `%1$s` / `%d`, `{placeholders}`, HTML tags and `\n`, valid ini syntax, language declared in every manifest) and runs in CI, so a new string cannot be forgotten. The Czech and German texts were written without a native-speaker review; corrections are welcome as pull requests.

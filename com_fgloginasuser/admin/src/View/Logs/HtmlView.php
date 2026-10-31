@@ -109,6 +109,7 @@ class HtmlView extends BaseHtmlView
             ->text('COM_FGLOGINASUSER_LOGS_EXPORT')
             ->toggleSplit(false)
             ->icon('icon-download')
+            ->buttonClass('btn btn-action')
             ->listCheck(false);
         $exportChild = $export->getChildToolbar();
         $exportChild->standardButton('exportcsv', 'COM_FGLOGINASUSER_LOGS_EXPORT_CSV', 'logs.exportCsv')->listCheck(false)->icon('icon-download');
