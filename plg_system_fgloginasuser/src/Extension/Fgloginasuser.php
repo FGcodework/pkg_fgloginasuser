@@ -21,6 +21,7 @@ use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\CMS\Event\User\LogoutEvent;
+use Joomla\CMS\Event\Model\PrepareFormEvent;
 use Joomla\Event\Priority;
 use Joomla\Event\SubscriberInterface;
 
@@ -41,6 +42,7 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
             'onBeforeCompileHead' => 'onBeforeCompileHead',
             'onAfterRoute'        => 'onAfterRoute',
             'onAfterRender'       => 'onAfterRender',
+            'onContentPrepareForm' => 'onContentPrepareForm',
             // Before core's user plugin, which would end all sessions of the impersonated user.
             'onUserLogout'        => ['onUserLogout', Priority::MAX],
         ];
@@ -114,6 +116,45 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
             Log::add('Rights re-check failed: ' . $e->getMessage(), Log::WARNING, 'com_fgloginasuser');
 
             return false;
+        }
+    }
+
+    /**
+     * Adds a read-only "login as" history to the core user edit form, for people who may view the logs.
+     * Any problem leaves the form as it is.
+     */
+    public function onContentPrepareForm(PrepareFormEvent $event): void
+    {
+        try {
+            $form = $event->getForm();
+            $app  = $this->getApplication();
+
+            if ($form->getName() !== 'com_users.user' || !$app || !$app->isClient('administrator') || !class_exists(AccessPolicy::class)) {
+                return;
+            }
+
+            $user = $app->getIdentity();
+            $data = $event->getData();
+            $id   = (int) (\is_object($data) ? ($data->id ?? 0) : (\is_array($data) ? ($data['id'] ?? 0) : 0));
+
+            if ($id <= 0) {
+                $id = $app->getInput()->getInt('id', 0);
+            }
+
+            if ($id <= 0 || !$user || $user->guest || !$user->authorise('fgloginasuser.logs', 'com_fgloginasuser')) {
+                return;
+            }
+
+            $app->getLanguage()->load('plg_system_fgloginasuser', JPATH_ADMINISTRATOR);
+            \Joomla\CMS\Form\FormHelper::addFieldPrefix('FG\\Plugin\\System\\Fgloginasuser\\Field');
+            $form->setField(
+                new \SimpleXMLElement('<field name="fgloginasuser_history" type="History" userid="' . $id . '" label="PLG_SYSTEM_FGLOGINASUSER_HISTORY" />'),
+                null,
+                true,
+                'user_details'
+            );
+        } catch (\Throwable $e) {
+            // The user form must never break because of this extra.
         }
     }
 
@@ -339,11 +380,11 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
         $html = '';
 
         if (($marker['reason'] ?? '') !== '') {
-            $html .= '<span style="opacity:.9">' . $e(Text::sprintf('PLG_SYSTEM_FGLOGINASUSER_BAR_REASON', (string) $marker['reason'])) . '</span>';
+            $html .= '<span class="fg-las-bar-detail">' . $e(Text::sprintf('PLG_SYSTEM_FGLOGINASUSER_BAR_REASON', (string) $marker['reason'])) . '</span>';
         }
 
         if (!empty($marker['expires'])) {
-            $html .= '<span style="opacity:.9">' . $e(Text::sprintf(
+            $html .= '<span class="fg-las-bar-detail">' . $e(Text::sprintf(
                 'PLG_SYSTEM_FGLOGINASUSER_BAR_UNTIL',
                 Factory::getDate((int) $marker['expires'])->setTimezone(new \DateTimeZone($this->getApplication()->get('offset', 'UTC')))->format('H:i')
             )) . '</span>';
@@ -388,18 +429,26 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
         $label = $isAdmin ? 'PLG_SYSTEM_FGLOGINASUSER_RETURN_ADMIN' : 'PLG_SYSTEM_FGLOGINASUSER_RETURN_SITE';
         $e     = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
 
-        $html = '<style>body{padding-bottom:56px!important}</style>'
-            . '<div id="fg-las-bar" role="status" style="position:fixed;left:0;right:0;bottom:0;z-index:2147483000;'
-            . 'display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;padding:10px 16px;'
-            . 'background:#b45309;color:#fff;font:14px/1.4 system-ui,sans-serif;box-shadow:0 -2px 8px rgba(0,0,0,.3)">'
+        // Styles live in media/com_fgloginasuser/css/bar.css (variables, overridable from the template).
+        $html = '<div id="fg-las-bar" role="status">'
             . '<span>' . $e(Text::sprintf(
                 'PLG_SYSTEM_FGLOGINASUSER_BAR',
                 (string) ($marker['target_username'] ?? ''),
                 (string) ($marker['actor_username'] ?? '')
             )) . '</span>'
             . $this->barDetails($marker, $e)
-            . '<a href="' . $e($url) . '" style="background:#fff;color:#7c2d12;padding:6px 14px;border-radius:4px;'
-            . 'font-weight:600;text-decoration:none">' . $e(Text::_($label)) . '</a></div>';
+            . '<a class="fg-las-bar-return" href="' . $e($url) . '">' . $e(Text::_($label)) . '</a></div>';
+
+        $css  = '<link rel="stylesheet" href="' . $e(Uri::root(true) . '/media/com_fgloginasuser/css/bar.css') . '">';
+        $head = stripos($body, '</head>');
+
+        // The stylesheet goes into the head when there is one, so the bar never shows unstyled.
+        if ($head !== false && $head < $pos) {
+            $body = substr_replace($body, $css, $head, 0);
+            $pos += \strlen($css);
+        } else {
+            $html = $css . $html;
+        }
 
         $app->setBody(substr_replace($body, $html, $pos, 0));
     }

@@ -123,7 +123,7 @@ class LoginController extends BaseController
                 'target_username' => $target->username,
                 'client'          => AccessPolicy::CLIENT_SITE,
                 'reason'          => (string) ($row->reason ?? ''),
-                'expires'         => SessionSwitcher::deadline($params),
+                'expires'         => SessionSwitcher::deadline($params, $actor),
             ]);
         } catch (ImpersonationException $e) {
             $log->markDenied((int) $row->id, $e->getMessage(), LogStore::STATUS_ACTIVE);

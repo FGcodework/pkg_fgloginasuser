@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.0 - 2026-10-30
+
+- **Maximum duration per group**: each row of *Restrictions* has an optional *Max. minutes*. For a person, the shortest of the general *Maximum duration* and the rows that apply to their groups (inherited ones included) wins; an empty or 0 value limits nothing. It also works for rows used only for the duration.
+- **Return bar styled from a stylesheet**: the inline styles of the "you are logged in as ..." bar moved to `media/com_fgloginasuser/css/bar.css` and use CSS variables (`--fg-las-bar-bg`, `--fg-las-btn-bg`, ...) that a template can override. The stylesheet is added to the page head.
+- **Webhook** (Options -> Log and notifications, *off* by default): a short message to one HTTPS address when a login starts, ends or is refused, selectable events. Formats: generic JSON (optionally signed with HMAC-SHA256 in `X-FG-Signature`), Slack, Discord, Microsoft Teams. No credentials in the address, redirects not followed, 3 second timeout, a failure is only logged to `com_fgloginasuser.log.php` and never changes the outcome of a login. Tokens, passwords and sessions are never part of it.
+- **History on the user edit page**: *Account Details* of a user shows the last 10 logins as that user and the last 10 made by that user, with a link to the filtered Logs. Only people who hold *View logs* see it.
+- Tests: `tests/release150.py`.
+
 ## 1.4.0 - 2026-10-30
 
 Audit and security.

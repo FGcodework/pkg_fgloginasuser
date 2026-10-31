@@ -267,6 +267,16 @@
 					label="COM_FGLOGINASUSER_CONFIG_RESTR_TARGETS"
 					multiple="true"
 				/>
+				<field
+					name="max_minutes"
+					type="number"
+					label="COM_FGLOGINASUSER_CONFIG_RESTR_MINUTES"
+					description="COM_FGLOGINASUSER_CONFIG_RESTR_MINUTES_DESC"
+					min="0"
+					max="1440"
+					filter="integer"
+					hint="COM_FGLOGINASUSER_CONFIG_RESTR_MINUTES_HINT"
+				/>
 			</form>
 		</field>
 	</fieldset>
@@ -301,6 +311,63 @@
 			description="COM_FGLOGINASUSER_CONFIG_NOTIFY_EMAIL_DESC"
 			validate="email"
 			showon="notify_enabled:1"
+		/>
+		<field
+			name="webhook_enabled"
+			type="radio"
+			layout="joomla.form.field.radio.switcher"
+			label="COM_FGLOGINASUSER_CONFIG_WEBHOOK_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_WEBHOOK_DESC"
+			default="0"
+			filter="integer"
+			>
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+		<field
+			name="webhook_url"
+			type="url"
+			label="COM_FGLOGINASUSER_CONFIG_WEBHOOK_URL_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_WEBHOOK_URL_DESC"
+			validate="url"
+			filter="url"
+			schemes="https"
+			showon="webhook_enabled:1"
+		/>
+		<field
+			name="webhook_preset"
+			type="list"
+			label="COM_FGLOGINASUSER_CONFIG_WEBHOOK_PRESET_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_WEBHOOK_PRESET_DESC"
+			default="generic"
+			showon="webhook_enabled:1"
+			>
+			<option value="generic">COM_FGLOGINASUSER_CONFIG_WEBHOOK_PRESET_GENERIC</option>
+			<option value="slack">Slack</option>
+			<option value="discord">Discord</option>
+			<option value="teams">Microsoft Teams</option>
+		</field>
+		<field
+			name="webhook_events"
+			type="list"
+			label="COM_FGLOGINASUSER_CONFIG_WEBHOOK_EVENTS_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_WEBHOOK_EVENTS_DESC"
+			multiple="true"
+			layout="joomla.form.field.list-fancy-select"
+			showon="webhook_enabled:1"
+			>
+			<option value="started">COM_FGLOGINASUSER_CONFIG_WEBHOOK_EVENT_STARTED</option>
+			<option value="ended">COM_FGLOGINASUSER_CONFIG_WEBHOOK_EVENT_ENDED</option>
+			<option value="denied">COM_FGLOGINASUSER_CONFIG_WEBHOOK_EVENT_DENIED</option>
+		</field>
+		<field
+			name="webhook_secret"
+			type="password"
+			label="COM_FGLOGINASUSER_CONFIG_WEBHOOK_SECRET_LABEL"
+			description="COM_FGLOGINASUSER_CONFIG_WEBHOOK_SECRET_DESC"
+			autocomplete="off"
+			filter="raw"
+			showon="webhook_enabled:1[AND]webhook_preset:generic"
 		/>
 	</fieldset>
 

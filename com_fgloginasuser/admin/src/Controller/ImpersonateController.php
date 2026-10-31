@@ -164,7 +164,7 @@ class ImpersonateController extends BaseController
                 'target_username' => $target->username,
                 'client'          => AccessPolicy::CLIENT_ADMIN,
                 'reason'          => $reason,
-                'expires'         => SessionSwitcher::deadline($params),
+                'expires'         => SessionSwitcher::deadline($params, $actor),
             ]);
         } catch (ImpersonationException $e) {
             // Nothing was switched: record the failure instead of a login that never happened.

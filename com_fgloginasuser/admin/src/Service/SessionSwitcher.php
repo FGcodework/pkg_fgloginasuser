@@ -51,11 +51,14 @@ final class SessionSwitcher
     }
 
     /**
-     * Unix time at which a new impersonation must end (0 = no limit), from the parameter "max_minutes".
+     * Unix time at which a new impersonation must end (0 = no limit): the general "max_minutes", shortened by any
+     * duration set for a restriction row that applies to the actor.
      */
-    public static function deadline(\Joomla\Registry\Registry $params): int
+    public static function deadline(\Joomla\Registry\Registry $params, ?User $actor = null): int
     {
-        $minutes = max(0, min(1440, (int) $params->get('max_minutes', 60)));
+        $minutes = $actor
+            ? AccessPolicy::maxMinutes($params, $actor)
+            : max(0, min(1440, (int) $params->get('max_minutes', 60)));
 
         return $minutes > 0 ? time() + $minutes * 60 : 0;
     }

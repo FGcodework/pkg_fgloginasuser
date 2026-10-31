@@ -51,6 +51,27 @@ final class ActionLogger
         string $reason = '',
         array $extra = []
     ): void {
+        // Webhook first and independent of the action log plugin; it never throws.
+        try {
+            $hookReason = $reason;
+
+            if (str_starts_with($hookReason, 'COM_')) {
+                $app->getLanguage()->load('com_fgloginasuser', JPATH_ADMINISTRATOR);
+                $hookReason = Reason::translate($hookReason);
+            }
+
+            $client = match ($messageKey) {
+                self::STARTED_SITE, self::STARTED_SITE_REASON => 'site',
+                self::STARTED_ADMIN, self::STARTED_ADMIN_REASON => 'administrator',
+                self::DENIED => '',
+                default => $app->isClient('administrator') ? 'administrator' : 'site',
+            };
+
+            Webhook::notify($messageKey, $client, $actorId, $actorName, $targetId, $targetName, $hookReason);
+        } catch (\Throwable $e) {
+            // Notifications must never affect the login.
+        }
+
         if (!PluginHelper::isEnabled('actionlog', 'fgloginasuser')) {
             return;
         }

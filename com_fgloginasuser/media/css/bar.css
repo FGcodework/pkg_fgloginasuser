@@ -1,0 +1,55 @@
+/*
+ * The "you are logged in as ..." bar (System - FG Login as User plugin).
+ * Override the variables from your own template CSS, for example:
+ *   :root { --fg-las-bar-bg: #1d4ed8; --fg-las-bar-position: top; }
+ */
+:root {
+  --fg-las-bar-bg: #b45309;
+  --fg-las-bar-fg: #fff;
+  --fg-las-bar-font: 14px/1.4 system-ui, sans-serif;
+  --fg-las-bar-padding: 10px 16px;
+  --fg-las-bar-gap: 12px;
+  --fg-las-bar-z: 2147483000;
+  --fg-las-bar-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+  --fg-las-bar-space: 56px;
+  --fg-las-btn-bg: #fff;
+  --fg-las-btn-fg: #7c2d12;
+  --fg-las-btn-padding: 6px 14px;
+  --fg-las-btn-radius: 4px;
+  --fg-las-detail-opacity: 0.9;
+}
+
+body {
+  padding-bottom: var(--fg-las-bar-space) !important;
+}
+
+#fg-las-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--fg-las-bar-z);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fg-las-bar-gap);
+  align-items: center;
+  justify-content: center;
+  padding: var(--fg-las-bar-padding);
+  background: var(--fg-las-bar-bg);
+  color: var(--fg-las-bar-fg);
+  font: var(--fg-las-bar-font);
+  box-shadow: var(--fg-las-bar-shadow);
+}
+
+#fg-las-bar .fg-las-bar-detail {
+  opacity: var(--fg-las-detail-opacity);
+}
+
+#fg-las-bar .fg-las-bar-return {
+  background: var(--fg-las-btn-bg);
+  color: var(--fg-las-btn-fg);
+  padding: var(--fg-las-btn-padding);
+  border-radius: var(--fg-las-btn-radius);
+  font-weight: 600;
+  text-decoration: none;
+}

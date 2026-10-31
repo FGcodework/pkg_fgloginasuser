@@ -146,6 +146,34 @@ final class AccessPolicy
     }
 
     /**
+     * Maximum duration in minutes for an impersonation started by $actor (0 = no limit): the shortest of the general
+     * "max_minutes" and the "max_minutes" of every restriction row whose actor group is one of the actor's groups
+     * (inherited ones included). A row without a number (0) does not limit anything.
+     */
+    public static function maxMinutes(Registry $params, User $actor): int
+    {
+        $limits = [max(0, min(1440, (int) $params->get('max_minutes', 60)))];
+
+        try {
+            $actorGroups = array_map('intval', Access::getGroupsByUser((int) $actor->id, true));
+
+            foreach ((array) $params->get('restrictions', []) as $row) {
+                $row = (array) $row;
+
+                if (\in_array((int) ($row['actor_group'] ?? 0), $actorGroups, true)) {
+                    $limits[] = max(0, min(1440, (int) ($row['max_minutes'] ?? 0)));
+                }
+            }
+        } catch (\Throwable $e) {
+            // Group lookup failed: the general limit still applies.
+        }
+
+        $limits = array_filter($limits, static fn (int $m): bool => $m > 0);
+
+        return $limits === [] ? 0 : min($limits);
+    }
+
+    /**
      * Per-group restrictions.
      *
      * - A rule applies when its actor group is one of the actor's groups, including inherited ones
