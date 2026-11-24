@@ -99,7 +99,7 @@ class LoginController extends BaseController
         $target      = $userFactory->loadUserById((int) $row->target_id);
 
         // Permissions may have changed in the seconds since the token was issued.
-        $error = (new AccessPolicy($params))->evaluate($actor, $target, AccessPolicy::CLIENT_SITE);
+        $error = (new AccessPolicy($params))->check($actor, $target, AccessPolicy::CLIENT_SITE);
 
         if ($error !== null) {
             $log->markDenied((int) $row->id, $error, LogStore::STATUS_ACTIVE);

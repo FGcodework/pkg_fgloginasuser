@@ -20,7 +20,7 @@ use Joomla\Registry\Registry;
 /**
  * Decides whether an actor may impersonate a target user on a given client.
  *
- * evaluate() returns null when allowed, otherwise the language key of the refusal reason.
+ * check() returns null when allowed, otherwise the language key of the refusal reason.
  */
 final class AccessPolicy
 {
@@ -47,7 +47,7 @@ final class AccessPolicy
      * Checks that apply to the person starting (or completing) an impersonation. Run again when the
      * one-time token is used, because the actor may have been blocked or lost rights in the meantime.
      */
-    public function evaluateActor(User $actor, string $client): ?string
+    public function checkActor(User $actor, string $client): ?string
     {
         $action     = $client === self::CLIENT_SITE ? 'fgloginasuser.frontend' : 'fgloginasuser.backend';
         $activation = trim((string) $actor->activation);
@@ -83,9 +83,9 @@ final class AccessPolicy
             && $actor->authorise('core.login.admin');
     }
 
-    public function evaluate(User $actor, User $target, string $client): ?string
+    public function check(User $actor, User $target, string $client): ?string
     {
-        if (($error = $this->evaluateActor($actor, $client)) !== null) {
+        if (($error = $this->checkActor($actor, $client)) !== null) {
             return $error;
         }
 

@@ -110,7 +110,7 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
             $actor = Factory::getContainer()->get(UserFactoryInterface::class)->loadUserById((int) $marker['actor_id']);
             $client = $marker['client'] === 'administrator' ? AccessPolicy::CLIENT_ADMIN : AccessPolicy::CLIENT_SITE;
 
-            return (new AccessPolicy(ComponentHelper::getParams('com_fgloginasuser')))->evaluateActor($actor, $client) !== null;
+            return (new AccessPolicy(ComponentHelper::getParams('com_fgloginasuser')))->checkActor($actor, $client) !== null;
         } catch (\Throwable $e) {
             Log::addLogger(['text_file' => 'com_fgloginasuser.log.php'], Log::WARNING, ['com_fgloginasuser']);
             Log::add('Rights re-check failed: ' . $e->getMessage(), Log::WARNING, 'com_fgloginasuser');
@@ -307,8 +307,8 @@ final class Fgloginasuser extends CMSPlugin implements SubscriberInterface
                             $params,
                             (int) $target->id,
                             $target->username,
-                            $policy->evaluate($actor, $target, AccessPolicy::CLIENT_SITE),
-                            $policy->evaluate($actor, $target, AccessPolicy::CLIENT_ADMIN),
+                            $policy->check($actor, $target, AccessPolicy::CLIENT_SITE),
+                            $policy->check($actor, $target, AccessPolicy::CLIENT_ADMIN),
                             false,
                             true
                         );

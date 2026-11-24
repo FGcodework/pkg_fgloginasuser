@@ -70,7 +70,7 @@ class ImpersonateController extends BaseController
             return;
         }
 
-        $error = (new AccessPolicy($params))->evaluate($actor, $target, $client) ?? Environment::check($this->app);
+        $error = (new AccessPolicy($params))->check($actor, $target, $client) ?? Environment::check($this->app);
 
         if ($error !== null) {
             $this->deny($log, $actor, $target, $targetId, $client, $ip, $error);

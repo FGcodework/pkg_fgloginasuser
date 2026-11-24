@@ -50,7 +50,7 @@ class HtmlView extends BaseHtmlView
             throw new GenericDataException(implode("\n", $errors), 500);
         }
 
-        $this->evaluateItems();
+        $this->checkItems();
 
         $this->filterForm->addControlField('task')->addControlField('boxchecked', '0');
 
@@ -62,7 +62,7 @@ class HtmlView extends BaseHtmlView
     /**
      * Pre-compute per row whether (and why not) each client can be impersonated.
      */
-    private function evaluateItems(): void
+    private function checkItems(): void
     {
         $actor   = $this->getCurrentUser();
         $policy  = new AccessPolicy($this->params);
@@ -70,8 +70,8 @@ class HtmlView extends BaseHtmlView
 
         foreach ($this->items ?: [] as $item) {
             $target             = $factory->loadUserById((int) $item->id);
-            $item->error_site   = $policy->evaluate($actor, $target, AccessPolicy::CLIENT_SITE);
-            $item->error_admin  = $policy->evaluate($actor, $target, AccessPolicy::CLIENT_ADMIN);
+            $item->error_site   = $policy->check($actor, $target, AccessPolicy::CLIENT_SITE);
+            $item->error_admin  = $policy->check($actor, $target, AccessPolicy::CLIENT_ADMIN);
         }
     }
 

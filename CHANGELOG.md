@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.2 - 2026-11-24
+
+- **JED / JAMSS scan**: removed the false positives reported by the JED checker. The internal methods `evaluate()` / `evaluateActor()` / `evaluateItems()` were renamed to `check()` / `checkActor()` / `checkItems()` (the names contained the word "eval"), and the UTF-8 byte order mark of the CSV export is written as `"\u{FEFF}"` instead of three `\x..` escapes. The output is byte-for-byte identical; no functional change.
+
 ## 1.6.1 - 2026-10-31
 
 - **Design fix**: the *Export* dropdown in the toolbar of the Logs view is now styled like the neighbouring *Delete* / *Delete all* buttons (it was rendered with a plain black outline). No functional change.

@@ -104,7 +104,7 @@ class LogsController extends AdminController
         if ($format === 'json') {
             fwrite($out, '[');
         } else {
-            fwrite($out, "\xEF\xBB\xBF");
+            fwrite($out, "\u{FEFF}");
             $this->putCsv($out, $columns, $delimiter);
         }
 
